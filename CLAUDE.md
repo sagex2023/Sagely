@@ -1,6 +1,6 @@
 # Sagely: instructions for Claude Code
 
-Sagely (newsletter "The Sagely Report", "Data Driven Investing") is an automated options newsletter and screener run by SAGE-X, LLC. Owner: Andrew. Repo: sagex2023/Sagely. Goal: passive (<5 hrs/week), no client calls, no employer conflict.
+Sagely (newsletter "The Sagely Sniper Trading Report", "Data Driven Investing") is an automated options newsletter and screener run by SAGE-X, LLC. Owner: Andrew. Repo: sagex2023/Sagely. Goal: passive (<5 hrs/week), no client calls, no employer conflict.
 
 Read first: README.md, PLAN.md, LAUNCH_CHECKLIST.md.
 

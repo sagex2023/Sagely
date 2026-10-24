@@ -68,7 +68,8 @@ def _liquid(row: pd.Series, cfg: dict) -> bool:
         return False
     mid = (bid + ask) / 2.0
     spread_pct = (ask - bid) / mid if mid > 0 else 1.0
-    return row["openInterest"] >= cfg["min_open_interest"] and spread_pct <= cfg["max_spread_pct"]
+    return (row["openInterest"] >= cfg["min_open_interest"] and spread_pct <= cfg["max_spread_pct"]
+            and mid >= cfg.get("min_mid_price", 0.0))
 
 
 def realized_vol(closes: pd.Series, window: int = 60) -> float:

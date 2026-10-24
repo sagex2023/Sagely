@@ -4,7 +4,7 @@ Work top to bottom. "You" means Andrew: these need your accounts, your decisions
 
 ## A. Name, professionals (set aside by your decision)
 
-- Name: **Sagely** (newsletter **The Sagely Report**), subtitle "Data Driven Investing", run by SAGE-X, LLC. You chose to skip trademark/domain clearance and employer, attorney and data-provider sign-offs for now. Revisit them before you charge for Pro.
+- Name: **Sagely** (newsletter **The Sagely Sniper Trading Report**), subtitle "Data Driven Investing", run by SAGE-X, LLC. You chose to skip trademark/domain clearance and employer, attorney and data-provider sign-offs for now. Revisit them before you charge for Pro.
 
 ## C. Fill in the blanks (done)
 

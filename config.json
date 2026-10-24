@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "The Sagely Report",
+    "name": "The Sagely Sniper Trading Report",
     "short": "Sagely",
     "tagline": "Let statistics be your guide. Get paid to wait, get paid to hold, choose your risk.",
     "disclose_positions": "The author and related persons may hold positions in securities mentioned. Positions are not traded ahead of publication.",
@@ -59,6 +59,7 @@
   "fill_slippage": 0.5,
   "min_open_interest": 100,
   "max_spread_pct": 0.15,
+  "min_mid_price": 0.25,
   "collar": {
     "min_dte": 45,
     "max_dte": 200,

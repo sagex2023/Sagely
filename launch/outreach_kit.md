@@ -21,7 +21,7 @@ Profile line: "Former Marine. I share plain-dollar options ideas for stock owner
 
 Subject: Swap recommendations?
 
-> Hi [Name], I read [Newsletter] every week, especially [specific issue or idea]. I write The Sagely Report, a weekly email that shows stock owners how to get paid to wait, get paid to hold, or set a floor. Each idea states the worst case first, and every pick is in a public track record. Our readers overlap on [topic]. Would you like to recommend each other? I can send a sample issue first.
+> Hi [Name], I read [Newsletter] every week, especially [specific issue or idea]. I write The Sagely Sniper Trading Report, a weekly email that shows stock owners how to get paid to wait, get paid to hold, or set a floor. Each idea states the worst case first, and every pick is in a public track record. Our readers overlap on [topic]. Would you like to recommend each other? I can send a sample issue first.
 >
 > [Your name]
 
