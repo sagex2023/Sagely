@@ -64,15 +64,22 @@ def parse_treasury_csv(text: str) -> dict[int, float]:
     return pts
 
 
-def fetch_treasury_curve(year: int | None = None, timeout: int = 15) -> BillCurve:
+def fetch_treasury_curve(year: int | None = None, timeout: int = 60, attempts: int = 2) -> BillCurve:
     import requests
 
     year = year or date.today().year
     url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
            f"daily-treasury-rates.csv/{year}/all?type=daily_treasury_yield_curve"
            f"&field_tdr_date_value={year}&page&_format=csv")
-    r = requests.get(url, timeout=timeout)
-    r.raise_for_status()
+    # treasury.gov is slow (15-20 s is normal), so allow a long read and one retry
+    for attempt in range(attempts):
+        try:
+            r = requests.get(url, timeout=timeout)
+            r.raise_for_status()
+            break
+        except requests.RequestException:
+            if attempt == attempts - 1:
+                raise
     return BillCurve(parse_treasury_csv(r.text), source="US Treasury par yield curve")
 
 
