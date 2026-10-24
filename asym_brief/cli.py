@@ -22,6 +22,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--publish", action="store_true", help="push to Buttondown (draft unless config says otherwise)")
     ap.add_argument("--dry-run", action="store_true", help="screen and print counts, write nothing")
     ap.add_argument("--push-only", action="store_true", help="push the newest rendered issue in --out to Buttondown, skip screening")
+    ap.add_argument("--send", action="store_true",
+                    help="with --push-only: send to subscribers if every safety gate passed, else save a draft and exit 2")
     ap.add_argument("--tickers", help="comma-separated override of the configured universe")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -37,8 +39,18 @@ def main(argv: list[str] | None = None) -> int:
             print("no rendered issue found in", args.out)
             return 1
         stamp = latest[-1].stem.replace("issue-", "")
-        resp = push_draft(f"{cfg['brand']['name']} - {stamp}", latest[-1], cfg["publish"]["buttondown_status"])
-        print("published:", resp.get("id", resp))
+        status = cfg["publish"]["buttondown_status"]
+        gate = None
+        if args.send:
+            from .gates import read_report
+
+            gate = read_report(Path(args.out))
+            status = "about_to_send" if gate["ok"] else "draft"
+        resp = push_draft(f"{cfg['brand']['name']} - {stamp}", latest[-1], status)
+        print(("sent:" if status == "about_to_send" else "draft saved:"), resp.get("id", resp))
+        if gate is not None and not gate["ok"]:
+            print("NOT SENT, needs your review. Failed gates:", "; ".join(gate["reasons"]))
+            return 2
         return 0
     provider = get_provider(args.provider)
     from .rates import load_curve
@@ -65,6 +77,11 @@ def main(argv: list[str] | None = None) -> int:
     from .track import render_track_record
 
     print("wrote", render_track_record(mark_log(log_path, provider), cfg, result["asof"], Path(args.out) / "track-record.html"))
+    from .gates import check_issue, write_report
+
+    reasons = check_issue(result, cfg, curve.source, paths["txt"].read_text())
+    write_report(Path(args.out), reasons)
+    print("safety gates:", "all passed" if not reasons else "FAILED: " + "; ".join(reasons))
     if args.publish:
         from .publish import push_draft
 

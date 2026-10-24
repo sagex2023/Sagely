@@ -4,16 +4,22 @@ name: daily-brief
 #   1. Runs the tests, then screens options and builds the issue, charts and track-record page.
 #   2. Saves the pick log and chart images back to the repo, so history and old emails never break.
 #   3. Publishes the landing page, privacy/terms pages, charts and track-record page to GitHub Pages.
-#   4. Only AFTER the site is live, pushes the issue to Buttondown as a DRAFT. You review and press send.
-# Nothing is ever sent to subscribers automatically.
+#   4. Only AFTER the site is live, pushes the issue to Buttondown.
+# Scheduled runs (Tuesday morning) SEND automatically, but only if every safety gate in asym_brief/gates.py
+# passed. If a gate fails, the issue is saved as a Buttondown DRAFT, the run is marked failed, and an alert
+# email goes to the business address. Manual runs only make a draft unless "send" is ticked.
 
 on:
   schedule:
-    - cron: "45 21 * * 1-5"   # 21:45 UTC weekdays = after the US close in both EDT and EST
+    - cron: "30 12 * * 2"   # Tuesday 12:30 UTC = 8:30am EDT / 7:30am EST, using Monday's close
   workflow_dispatch:
     inputs:
       dry_run:
         description: "Only screen and print counts (use this first to test your data connection)"
+        type: boolean
+        default: false
+      send:
+        description: "Send to subscribers if every safety gate passes (leave unticked to make a draft only)"
         type: boolean
         default: false
 
@@ -102,6 +108,8 @@ jobs:
     needs: deploy
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
+    env:
+      HAVE_ALERT: ${{ secrets.ALERT_EMAIL_PASSWORD != '' && 'yes' || 'no' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -113,9 +121,27 @@ jobs:
         with:
           name: issue-and-social
           path: out
-      - name: Push the issue to Buttondown as a DRAFT
+      - name: Send the issue if every safety gate passed, otherwise save a draft
+        id: push
         env:
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          SEND: ${{ (github.event_name == 'schedule' || inputs.send) && '--send' || '' }}
         run: |
-          if [ -z "$BUTTONDOWN_API_KEY" ]; then echo "No BUTTONDOWN_API_KEY set; skipping the draft."; exit 0; fi
-          python -m asym_brief.cli --push-only --out out
+          if [ -z "$BUTTONDOWN_API_KEY" ]; then echo "No BUTTONDOWN_API_KEY set; skipping."; exit 1; fi
+          python -m asym_brief.cli --push-only --out out $SEND | tee push.log
+      - name: Email an alert if the issue was not sent
+        if: ${{ failure() && env.HAVE_ALERT == 'yes' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.ALERT_EMAIL_USER }}
+          password: ${{ secrets.ALERT_EMAIL_PASSWORD }}
+          to: ${{ secrets.ALERT_EMAIL_USER }}
+          from: Sagely alerts <${{ secrets.ALERT_EMAIL_USER }}>
+          subject: "Sagely: this week's issue was NOT sent"
+          body: |
+            The weekly issue failed a safety gate or the workflow broke. It was saved as a Buttondown draft if possible.
+            Review it, then send by hand or fix the cause.
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

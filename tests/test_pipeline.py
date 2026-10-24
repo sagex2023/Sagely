@@ -290,3 +290,15 @@ def test_corrections_and_footer_in_issue(tmp_path):
     out = tmp_path / "o"
     cli.main(["--provider", "fixture", "--config", str(ROOT / "config.json"), "--out", str(out), "--log", str(tmp_path / "l.csv")])
     assert "quietly edit" in next(out.glob("issue-*.html")).read_text()
+
+
+def test_auto_send_gates():
+    from asym_brief.gates import check_issue
+
+    ok = {"collars": [1], "puts": [1], "covered_calls": [1], "skipped": [], "asof": date(2026, 10, 20)}
+    today = date(2026, 10, 21)
+    assert check_issue(ok, CFG, "US Treasury par yield curve", "worst case first", today) == []
+    bad = dict(ok, puts=[], skipped=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], asof=date(2026, 10, 1))
+    reasons = " | ".join(check_issue(bad, CFG, "flat default", "this is Risk-Free", today))
+    for expected in ("Entry Optimizer", "Treasury", "skipped", "days old", "risk-free"):
+        assert expected in reasons
