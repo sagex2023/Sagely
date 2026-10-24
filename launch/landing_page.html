@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sagely | Data Driven Investing</title>
+<meta name="description" content="A free weekly email for stock owners: three ways options can pay you to wait, pay you to hold, or set a floor under a position, shown in plain dollars with the worst case first.">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#151b26; --muted:#5a6578; --line:#e1e5ec;
+    --accent:#1d4ed8; --accent-ink:#ffffff; --good:#0f7a4d; --bad:#b42318; --soft:#eef2ff;
+    --series:#2a78d6; --neutral:#7d7c77; --grid:#e3e5ea; --axis:#b9bec8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e131b; --card:#161d29; --ink:#e8ecf3; --muted:#9aa6ba; --line:#263044;
+      --accent:#6c9bff; --accent-ink:#0e131b; --good:#4cc38a; --bad:#ff7a6b; --soft:#1a2440;
+      --series:#3987e5; --neutral:#8f8e87; --grid:#2a3345; --axis:#4a5568;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e131b; --card:#161d29; --ink:#e8ecf3; --muted:#9aa6ba; --line:#263044;
+    --accent:#6c9bff; --accent-ink:#0e131b; --good:#4cc38a; --bad:#ff7a6b; --soft:#1a2440;
+    --series:#3987e5; --neutral:#8f8e87; --grid:#2a3345; --axis:#4a5568;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+  .wrap{max-width:780px;margin:0 auto;padding:0 16px}
+  header{padding:20px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .brand{font-weight:800;letter-spacing:.2px;font-size:18px}
+  .brandsub{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .eyebrow{font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+  .nohype{background:var(--soft);border-radius:12px;padding:16px 18px}
+  .nohype h2{margin-top:0}
+  .nohype ul{margin:8px 0 0;padding-left:20px}
+  .nohype li{margin:4px 0}
+  .hero{padding:32px 0 12px}
+  h1{font-size:clamp(30px,6.4vw,46px);line-height:1.12;margin:0 0 14px}
+  .lead{font-size:18px;color:var(--muted);margin:0 0 22px}
+  form{display:flex;gap:8px;flex-wrap:wrap}
+  input[type=email]{flex:1 1 240px;padding:13px 14px;font-size:16px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+  button,.btn{padding:13px 20px;font-size:16px;font-weight:700;border:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);cursor:pointer;text-decoration:none;display:inline-block}
+  .fine{font-size:13px;color:var(--muted);margin-top:8px}
+  section{padding:26px 0}
+  h2{font-size:24px;line-height:1.25;margin:0 0 10px}
+  h3{font-size:17px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .muted{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:13px;color:var(--muted);font-weight:600}
+  .good{color:var(--good);font-weight:700} .bad{color:var(--bad);font-weight:700}
+  .tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted);margin-bottom:8px}
+  .price{font-size:30px;font-weight:800}
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
+  summary{cursor:pointer;font-weight:700}
+  details p{margin:8px 0 0}
+  ul.tick{list-style:none;padding:0;margin:0}
+  ul.tick li{padding:4px 0 4px 26px;position:relative}
+  ul.tick li::before{content:"\2713";position:absolute;left:0;color:var(--good);font-weight:700}
+  ul.cross li::before{content:"\2715";color:var(--bad)}
+  .callout{background:var(--soft);border-radius:12px;padding:16px}
+  footer{padding:28px 0 48px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);margin-top:20px}
+
+  /* ---- payoff chart ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:0 0 6px;color:var(--ink)}
+  .key{display:inline-flex;align-items:center;gap:8px}
+  .key i{display:inline-block;width:18px;height:2px;border-radius:2px}
+  .chart{position:relative;min-height:280px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  .chart svg{display:block;overflow:visible}
+  .g-grid{stroke:var(--grid);stroke-width:1}
+  .g-axis{stroke:var(--axis);stroke-width:1}
+  .g-text{fill:var(--muted);font-size:12px}
+  .g-label{fill:var(--ink);font-size:12px;font-weight:600}
+  .g-note{fill:var(--muted);font-size:12px}
+  .g-line{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .g-cross{stroke:var(--axis);stroke-width:1}
+  .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.45;box-shadow:0 2px 10px rgba(0,0,0,.12);min-width:150px;display:none;z-index:2}
+  .tip .th{color:var(--muted);margin-bottom:2px}
+  .tip .tr{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .tip .tk{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+  .tip .tk i{display:inline-block;width:12px;height:2px;border-radius:2px}
+  .tip b{font-size:14px}
+  .ctrl{margin:12px 0 4px}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;margin-bottom:4px}
+  .ctrl label b{font-size:20px}
+  input[type=range]{width:100%;accent-color:var(--accent);margin:4px 0 8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:7px 12px;font-size:14px;font-weight:600;border-radius:999px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .ro2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 8px}
+  .ro1{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 8px}
+  .ro{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .ro.emph{background:var(--soft);border-color:transparent}
+  .ro span{display:block;font-size:13px;color:var(--muted)}
+  .ro b{display:block;font-size:clamp(24px,6vw,32px);line-height:1.2;font-variant-numeric:tabular-nums}
+  .neg{color:var(--bad)} .pos{color:var(--good)} .zero{color:var(--ink)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0}
+  .st{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .st span{display:block;font-size:13px;color:var(--muted)}
+  .st b{display:block;font-size:clamp(20px,5vw,26px);line-height:1.25;font-variant-numeric:tabular-nums}
+  .st small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .verdict{margin:6px 0 0;font-weight:600;min-height:3.2em}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tile .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .tile .v{font-size:18px;font-weight:800;line-height:1.3;margin:4px 0 6px}
+  .tile p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+  .tile.t1{border-top:3px solid var(--series)}
+  .tile.t2{border-top:3px solid var(--good)}
+  .tile.t3{border-top:3px solid var(--neutral)}
+  .tile.t4{border-top:3px solid var(--bad)}
+  .stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+  .stat3 div{background:var(--soft);border-radius:10px;padding:10px 8px;text-align:center}
+  .stat3 b{display:block;font-size:20px}
+  .stat3 span{font-size:12px;color:var(--muted)}
+
+  /* ---- Sagely additions ---- */
+  label[for=dl]{display:block}
+  .dialends{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+  [hidden]{display:none!important}
+  .jobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .job{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;border-top:3px solid var(--neutral)}
+  .job.enter{border-top-color:var(--good)} .job.hold{border-top-color:var(--accent)} .job.protect{border-top-color:var(--series)}
+  .job .n{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .job h3{font-size:20px;margin:2px 0 2px}
+  .job .promise{font-weight:700;margin:0 0 8px}
+  .job dl{margin:0;font-size:14px;line-height:1.5}
+  .job dt{font-weight:700;margin-top:8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .job dd{margin:2px 0 0}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+  .tab{padding:9px 14px;font-size:15px;font-weight:700;border-radius:10px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;counter-reset:s}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative}
+  .step b{display:block;margin-bottom:2px}
+  .step p{margin:0;font-size:14px;color:var(--muted)}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cmp th,.cmp td{text-align:left;vertical-align:top;padding:8px 8px;font-size:14px}
+  .cmp th:first-child,.cmp td:first-child{font-weight:700;width:26%}
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .tier{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+  .tier b{display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="brand">Sagely <span class="brandsub">Data Driven Investing</span></div><a class="btn" href="#join">Get the free email</a></header>
+
+  <div class="hero">
+    <p class="eyebrow">Let statistics be your guide</p>
+    <h1>Get paid to wait. Get paid to hold. Choose your risk.</h1>
+    <p class="lead">A free weekly email for people who own stocks. We show three ways to use options: get paid to buy at a lower price, get paid rent on shares you own, or set a floor under a stock you worry about. Every idea is in plain dollars, with the mathematical worst case first. No jargon, no hype, no "can't lose" claims. Statistics show odds, not promises.</p>
+    <form id="join" action="https://buttondown.com/api/emails/embed-subscribe/sagexFinancial" method="post" target="popupwindow">
+      <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
+      <button type="submit">Send me the weekly email</button>
+    </form>
+    <div class="fine">Sagely: data driven investing. Transparent, statistical, no hype. Free. One email a week. Unsubscribe in one click.</div>
+  </div>
+
+  <section class="nohype" id="how">
+    <h2>Transparent. Statistical. No hype.</h2>
+    <p>Every number comes from a statistical method and assumptions we publish. That is rare in options writing, where the pitch is usually a big number and a confident voice.</p>
+    <ul>
+      <li><b>Mathematical worst case first.</b> Each idea starts with the most you could lose, worked out by math, in dollars, on 100 shares.</li>
+      <li><b>Assumptions shown.</b> We state the option prices and volatility we use, and we compare each idea with what a short-term Treasury bill would pay, so you can see what drives each result.</li>
+      <li><b>Every pick logged.</b> We keep a public track record of what we feature, including the misses. It goes live with the first issue.</li>
+      <li><b>No predictions.</b> Statistics describe odds. They do not promise results. Daily rules pick which job fits a stock, based on how it has behaved.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Three jobs for options on stocks you own or want to own</h2>
+    <p class="sub">Each email picks setups that fit the market today and shows what you get and what you give up. The first two earn income. Only the third sets a floor. We never blur that.</p>
+    <div class="jobs">
+      <div class="job enter">
+        <div class="n">1 &middot; Getting in</div>
+        <h3>Entry Optimizer</h3>
+        <p class="promise">Get paid to wait for your price.</p>
+        <dl>
+          <dt>You get</dt><dd>Cash now for agreeing to buy a stock at a lower price. If it stays above that price, you keep the cash. If it falls to it, you buy at a discount.</dd>
+          <dt>You give up</dt><dd>Big rallies while you wait. If the stock falls hard, you still own it. This is a cushion, not a floor.</dd>
+          <dt>If it falls below your price</dt><dd>You buy 100 shares at your price (our example below: $92) and keep the cash you were paid. Every $1 lower costs you another $100. If it went to zero, the mathematical worst case is almost the full price. You then own the stock and can switch to Rent Check.</dd>
+          <dt>Again and again</dt><dd>Stock stayed above your price? Keep the cash and get paid again next cycle. If you end up buying, switch to Rent Check.</dd>
+        </dl>
+      </div>
+      <div class="job hold">
+        <div class="n">2 &middot; Holding</div>
+        <h3>Rent Check</h3>
+        <p class="promise">Get paid while you own it.</p>
+        <dl>
+          <dt>You get</dt><dd>Rent on shares you already own. It lowers your cost and softens a small drop.</dd>
+          <dt>You give up</dt><dd>Gains above the sell price you agreed to. The rent cushions a small drop. It does not protect you from a big fall.</dd>
+          <dt>Again and again</dt><dd>Collect rent every cycle you keep the shares, as long as the market pays for it. The amount changes each cycle.</dd>
+        </dl>
+      </div>
+      <div class="job protect">
+        <div class="n">3 &middot; Protecting</div>
+        <h3>Risk Limiter</h3>
+        <p class="promise">Choose your worst case.</p>
+        <dl>
+          <dt>You get</dt><dd>A floor under your shares at the price you pick. The upside you give up helps pay for it.</dd>
+          <dt>You give up</dt><dd>Gains above the ceiling, plus a small cost.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE VALUE STORY ============ -->
+  <section id="see-it">
+    <h2>See what each one does on a good day and a bad day</h2>
+    <p class="sub">Hypothetical example with made-up numbers: 100 shares of a $100 stock ($10,000) over 90 days. Pick a job, then drag the slider to try any outcome.</p>
+
+    <div class="card">
+      <span class="tag">Hypothetical example, not a recommendation</span>
+      <div class="tabs" role="tablist" aria-label="Choose a strategy">
+        <button type="button" class="tab" role="tab" id="tab-protect" data-m="protect" aria-selected="true">Risk Limiter</button>
+        <button type="button" class="tab" role="tab" id="tab-hold" data-m="hold" aria-selected="false">Rent Check</button>
+        <button type="button" class="tab" role="tab" id="tab-enter" data-m="enter" aria-selected="false">Entry Optimizer</button>
+      </div>
+      <p class="muted" id="what" style="margin:0 0 10px"></p>
+      <div class="ctrl" id="dialbox">
+        <label for="dl"><span class="muted">Choose your risk:</span> <b id="dlv"></b></label>
+        <input id="dl" type="range" min="0" max="7" step="1" value="3" aria-describedby="dlnote">
+        <div class="dialends"><span>Tighter floor, lower ceiling</span><span>Wider floor, higher ceiling</span></div>
+        <p class="fine" id="dlnote">Example prices from a standard options model (25% volatility, 4% interest rates, 90 days). Each trade is priced a little worse than the middle price. Real quotes differ. Watch how fast the ceiling drops as the floor gets tighter. That is the price of protection.</p>
+        <details>
+          <summary>See every floor setting</summary>
+          <table id="menu"></table>
+        </details>
+      </div>
+      <div class="legend">
+        <span class="key"><i style="background:var(--neutral)"></i><span id="lg-own"></span></span>
+        <span class="key"><i style="background:var(--series)"></i><span id="lg-str"></span></span>
+      </div>
+      <div class="chart" id="ch"></div>
+
+      <div class="ctrl">
+        <label for="sl"><span class="muted">If the stock moves over 90 days:</span> <b id="slv">-20%</b></label>
+        <input id="sl" type="range" min="-30" max="30" step="1" value="-20" aria-describedby="vd">
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="ro2">
+        <div class="ro"><span id="ro-own-l">Just own the shares</span><b id="ro-own" class="neg">-$2,000</b></div>
+        <div class="ro emph"><span id="ro-str-l">Risk Limiter</span><b id="ro-str" class="neg">-$320</b></div>
+      </div>
+      <p class="verdict" id="vd" aria-live="polite"></p>
+
+      <div class="stats" id="stats" aria-label="Worst case, best case and reward/risk for this setup"></div>
+      <p class="fine" id="stats-note"></p>
+
+      <details>
+        <summary>See the numbers as a table</summary>
+        <table id="tbl"></table>
+        <p class="muted" style="font-size:14px" id="tbl-note"></p>
+      </details>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+    <noscript><p class="fine">The interactive charts need JavaScript. The three cards above summarize each job.</p></noscript>
+  </section>
+
+  <section>
+    <h2>One method, three jobs, and a daily forecast</h2>
+    <p class="sub">Most people use these pieces on their own. Sagely fits them together, from the day you buy to the day you want to protect what you have.</p>
+    <div class="steps">
+      <div class="step"><b>Want to own it?</b><p>Entry Optimizer: get paid to wait for a lower price.</p></div>
+      <div class="step"><b>Own it?</b><p>Rent Check: collect the rent again and again while you hold.</p></div>
+      <div class="step"><b>Think it has topped?</b><p>Risk Limiter: pick the worst case you can live with.</p></div>
+    </div>
+
+    <h3 style="margin:22px 0 4px">Collect the rent again and again</h3>
+    <p class="sub" style="margin-top:0">This is not a one-off trade. Each cycle you keep the shares, you can sell another call and get paid again. Each cycle you keep waiting, you can sell another put and get paid again. Here is Rent Check over four 90-day cycles on a $100 stock, with $223 of rent each time. In real life the amount changes every cycle.</p>
+    <p><b>If the stock drifts up, with a dip:</b> you collect $892 of rent. In cycle 4 the stock ends at $112, so your shares are sold at $108. You make +$800 on the shares plus $892 of rent, or +$1,692. Just owning would have made +$1,200. Then you can go back to Entry Optimizer and get paid to wait for a lower price.</p>
+    <details>
+      <summary>See the four cycles</summary>
+      <div class="tablewrap"><table class="cmp" aria-label="Four cycles of Rent Check, stock rises">
+        <tr><th>Cycle</th><th>Stock ends at</th><th>What happens</th><th>Rent</th><th>Rent so far</th></tr>
+        <tr><td>1</td><td>$100</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$223</td></tr>
+        <tr><td>2</td><td>$94</td><td>Call expires. Shares are down on paper. Rent is yours.</td><td>$223</td><td>$446</td></tr>
+        <tr><td>3</td><td>$104</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$669</td></tr>
+        <tr><td>4</td><td>$112</td><td>Above $108, so shares are sold at $108.</td><td>$223</td><td>$892</td></tr>
+      </table></div>
+    </details>
+    <p><b>If the stock keeps sliding:</b> you still collect $892 of rent. But the shares are down $1,600 at $84, so you are down $708. Just owning would be down $1,600. The rent softened the fall. It did not protect you, and it is not a floor. That is why only Risk Limiter sets one.</p>
+    <details>
+      <summary>See the four cycles</summary>
+      <div class="tablewrap"><table class="cmp" aria-label="Four cycles of Rent Check, stock slides">
+        <tr><th>Cycle</th><th>Stock ends at</th><th>What happens</th><th>Rent</th><th>Rent so far</th></tr>
+        <tr><td>1</td><td>$96</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$223</td></tr>
+        <tr><td>2</td><td>$92</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$446</td></tr>
+        <tr><td>3</td><td>$88</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$669</td></tr>
+        <tr><td>4</td><td>$84</td><td>Call expires. You keep the shares.</td><td>$223</td><td>$892</td></tr>
+      </table></div>
+    </details>
+    <p class="fine">Entry Optimizer works the same way. If the stock stays above your price, you keep the cash and can sell another put next cycle. If you end up buying, you switch to Rent Check. Three jobs, one ongoing process. Example numbers only. Ignores dividends, commissions and taxes.</p>
+    <p class="muted" style="margin-top:12px">Our daily forecast looks at each stock and says which job fits today. Risk Limiter if a stock has run up or is jumpy. Entry Optimizer if it trades below its recent average. Rent Check if option prices look rich. "Sit out" if nothing stands out. It describes how the stock is behaving. It is not advice for you personally.</p>
+  </section>
+
+  <section>
+    <h2>Floors, labelled honestly</h2>
+    <p class="sub">A floor at zero or better is rare, because the market charges for it. When one exists, we flag it. We keep it separate from floors that rely on dividends being paid.</p>
+    <details>
+      <summary>See the three kinds of floor</summary>
+    <div class="tiers">
+      <div class="tier"><b>Capital-protected</b>At expiry, the worst case is zero or better after costs, ignoring dividends. Rare. It only holds if you keep the shares to expiry.</div>
+      <div class="tier"><b>Protected only if dividends are paid</b>The floor clears zero only because of expected dividends. Dividends can be cut, so we say so.</div>
+      <div class="tier"><b>Near-protected</b>A small, known worst-case loss. Most collars land here.</div>
+    </div>
+    </details>
+    <p class="fine">We never call anything risk-free, because nothing is.</p>
+  </section>
+
+  <section>
+    <h2>Why not just buy an income or buffer fund?</h2>
+    <p class="sub">Funds are a fair choice, and often the simpler one. Here is how doing it yourself, with a clear picture, is different.</p>
+    <details>
+      <summary>Compare with income and buffer funds</summary>
+    <div class="tablewrap">
+    <table class="cmp">
+      <tr><th></th><th>Covered-call income funds</th><th>Buffer funds</th><th>Sagely</th></tr>
+      <tr><td>Who decides</td><td>The fund picks stocks and strikes</td><td>The fund picks the index and the buffer</td><td>You see each idea and decide</td></tr>
+      <tr><td>Upside</td><td>Often trails in strong rallies</td><td>Capped</td><td>Capped, and shown in dollars up front</td></tr>
+      <tr><td>Downside</td><td>Income cushion only</td><td>Usually covers the first 10% to 15% of losses, over the fund's outcome period</td><td>Risk Limiter sets a floor you choose. The other two earn income and are labelled that way</td></tr>
+      <tr><td>Cost</td><td>Fund fee</td><td>Fund fee, often around 0.7% a year</td><td>No fund fee. You pay broker costs and the bid/ask spread</td></tr>
+      <tr><td>Effort</td><td>None</td><td>None</td><td>You place and manage the trades</td></tr>
+    </table>
+    </div>
+    </details>
+    <p class="fine">If you want hands-off and spread out, a fund may suit you better. Fund descriptions are general and differ by fund.</p>
+  </section>
+
+  <section>
+    <h2>Does this sound like you?</h2>
+    <div class="grid">
+      <div class="card"><h3>You want income from stocks you hold</h3><p class="muted">Dividends are not the only way to get paid for owning something.</p></div>
+      <div class="card"><h3>You think a stock may have topped</h3><p class="muted">Maybe it has run up, or it is a big part of your net worth, and you don't want to sell yet.</p></div>
+      <div class="card"><h3>You're getting closer to needing the money</h3><p class="muted">A big drop matters more the closer you are to spending the money. A known, mathematical worst case helps you plan.</p></div>
+      <div class="card"><h3>Options feel like a foreign language</h3><p class="muted">You have heard of puts, calls and collars, but most guides assume you know the rest.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Every idea in plain dollars</h2>
+    <p class="sub">Each email features two ideas in detail: one with the best floor and one with the best income. It lists the rest. Each one gets the same plain facts.</p>
+    <ul class="tick">
+      <li><strong>The most you could lose</strong>, worked out by math and stated first.</li>
+      <li><strong>The most you could make</strong>, so you know what you give up.</li>
+      <li><strong>The cash or shares you need</strong>, per contract (one contract covers 100 shares).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Why we show the downside first</h2>
+    <div class="callout">
+      <ul class="tick" style="margin:0">
+        <li>Income is not a floor. Entry Optimizer and Rent Check are labelled as income, and we show the mathematical worst case of a hard fall.</li>
+        <li>"Protection" is never free. Every idea shows what the protection costs you.</li>
+        <li>Some weeks nothing passes our filters. We say so instead of inventing a pick.</li>
+        <li>We assume you trade at slightly worse prices than the quoted middle, and we skip thinly traded contracts.</li>
+        <li>Every idea we publish is logged, wins and losses, in a public track record.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>What we look at</h2>
+    <p class="sub">Liquid stocks and ETFs from many sectors: broad index funds, tech and chips, energy, health care, banks, and steady dividend payers. The full list is in every email and changes as markets change.</p>
+  </section>
+
+  <section>
+    <h2>Is this for you?</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>A good fit if you...</h3>
+        <ul class="tick">
+          <li>own stocks or ETFs and understand a basic gain or loss</li>
+          <li>want to know your mathematical worst case before you act</li>
+          <li>can accept losing the "most you could lose" amount</li>
+          <li>are happy to read a short email and decide for yourself</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Not a fit if you...</h3>
+        <ul class="tick cross">
+          <li>want guaranteed or "risk-free" returns (nothing is, and statistics never promise results)</li>
+          <li>want someone to tell you what to buy for your situation</li>
+          <li>want fast day-trading signals</li>
+          <li>can't afford to lose the amounts shown</li>
+        </ul>
+      </div>
+    </div>
+    <p class="fine">Brokers set options approval levels differently. Check that yours allows each strategy. Each email notes the usual level needed.</p>
+  </section>
+
+  <section>
+    <h2>Pricing</h2>
+    <div class="grid">
+      <div class="card"><h3>Free</h3><div class="price">$0</div><p class="muted">The weekly email with two featured ideas and charts, the top ideas for each job, and the running track record.</p></div>
+      <div class="card"><h3>Pro (coming later)</h3><div class="price">About $12<span class="muted" style="font-size:16px;font-weight:400">/mo or $120/yr</span></div><p class="muted">A daily screen, the full list of ideas, alerts, and a spreadsheet download. Planned pricing, still being tested. Free subscribers get first access to founding-member pricing.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Common questions</h2>
+    <details><summary>Is this investment advice?</summary><p class="muted">No. This is general education sent to every subscriber. It does not look at your goals, money or risk tolerance, and the author is not your financial advisor.</p></details>
+    <details><summary>Do I have to own the stock?</summary><p class="muted">For Rent Check and Risk Limiter, yes: you hold 100 shares per contract. For Entry Optimizer you hold cash instead, enough to buy 100 shares at the price you agreed to. Each idea says which one applies.</p></details>
+    <details><summary>Can a collar still lose money?</summary><p class="muted">Yes. Most collars have a small known worst-case loss. Even a floor at zero is measured at expiry, only if you keep the shares until then, and before costs like commissions and taxes. You also give up gains above the ceiling,. If the stock ends above the ceiling, your shares can be sold at that price, which can trigger taxes. Early assignment can also change the result.</p></details>
+    <details><summary>What could go wrong with Entry Optimizer and Rent Check?</summary><p class="muted">Entry Optimizer: if the stock falls hard, you still end up owning it at the agreed price, so you can lose a lot, less the cash you were paid. Rent Check: the rent only cushions a small fall, and your gains stop at the agreed price. Neither sets a floor.</p></details>
+    <details><summary>How will I see your track record?</summary><p class="muted">On a public page that we update with each issue. It lists every idea we publish, winners and losers, how many have settled, and the typical, best and worst results. The page goes live with the first issue. Until then there is no history to show, and we will not make any up.</p></details>
+    <details><summary>What if you get something wrong?</summary><p class="muted">We fix it and say so. If a number in an issue is wrong, the next issue opens with the correction and what changed, and the track-record page is corrected too. We do not quietly edit past results.</p></details>
+    <details><summary>Where do the prices come from?</summary><p class="muted">Delayed market data from a commercial provider, run through a fixed set of filters. Each email names its data source and filters.</p></details>
+    <details><summary>Do you trade these ideas?</summary><p class="muted">Each email has a position disclosure. Positions are never traded ahead of publication.</p></details>
+    <details><summary>Why should I trust you?</summary><p class="muted">Don't, yet. That is why every idea is logged and scored in public, wins and losses, so you can judge the results yourself.</p></details>
+  </section>
+
+  <section>
+    <div class="callout" style="text-align:center">
+      <h2 style="margin-bottom:8px">Get the first email free</h2>
+      <p class="muted" style="margin:0 0 14px">The mathematical worst case first, every time.</p>
+      <a class="btn" href="#join">Sign up above</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>For educational and informational purposes only. Not personalized investment advice, a recommendation, or an offer to buy or sell any security. Options involve risk and are not suitable for every investor. You can lose the entire amount shown as the most you could lose. Past results do not guarantee future results, and statistics describe odds, not outcomes. Hypothetical examples use made-up numbers and are illustrative only. Fund comparisons are general, not statements about any specific fund.</p>
+    <p>Sagely: data driven investing. Let statistics be your guide. Transparent, statistical, no hype.</p>
+    <p><a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a></p>
+    <p>&copy; SAGE-X, LLC, doing business as Sagely. All rights reserved.<br>1313 Coolridge Dr., Brandon, FL 33511</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function sgn(p){ return (p > 0 ? "+" : "") + p + "%"; }
+  function usd(v){ var r = Math.round(v); if (r === 0) return "$0"; return (r < 0 ? "-$" : "+$") + Math.abs(r).toLocaleString("en-US"); }
+  function plain(v){ return "$" + Math.abs(Math.round(v)).toLocaleString("en-US"); }
+  function tick$(v){ if (v === 0) return "$0"; var a = Math.abs(v); return (v < 0 ? "-" : "") + "$" + (a >= 1000 ? (a / 1000) + "K" : a); }
+  function cls(v){ var r = Math.round(v); return r < 0 ? "neg" : (r > 0 ? "pos" : "zero"); }
+  function r1(x){ return (Math.round(x * 10) / 10).toString(); }
+
+  /* Hypothetical payoffs per 100 shares of a $100 stock, 90 days. All prices come from one illustrative
+     Black-Scholes run (25% volatility, 4% rates, 1% dividend yield), with each option leg assumed to
+     trade 7.5 cents worse than the middle price. Nothing here is a real quote. */
+  var P0 = 100;
+  function price(p){ return P0 * (1 + p / 100); }
+  function own(p){ return (price(p) - P0) * 100; }
+
+  /* Risk Limiter dial: [put strike (floor), call strike (ceiling), net cost per share]. The ceiling is the call
+     that makes the collar close to zero-cost for that floor. */
+  var DIAL = [[100, 102, 0.34], [98, 104, 0.21], [96, 106, 0.10], [94, 109, 0.26], [92, 111, 0.14], [90, 114, 0.20], [88, 116, 0.11], [85, 121, 0.18]];
+  var di = 3;
+  function collarFn(i){
+    var d = DIAL[i];
+    return function(p){ var s = price(p); return (s - P0) * 100 + Math.max(d[0] - s, 0) * 100 - Math.max(s - d[1], 0) * 100 - d[2] * 100; };
+  }
+  /* Rent Check: own shares, sell a $108 call for $2.23 ($2.30 middle less 7.5 cents) */
+  var RENT_K = 108, RENT_PREM = 2.23;
+  function rent(p){ var s = price(p); return (s - P0) * 100 + RENT_PREM * 100 - Math.max(s - RENT_K, 0) * 100; }
+  /* Entry Optimizer: sell a $92 put for $1.53 ($1.60 middle less 7.5 cents); cash set aside $9,200 */
+  var WAIT_K = 92, WAIT_PREM = 1.53;
+  function wait(p){ var s = price(p); return WAIT_PREM * 100 - Math.max(WAIT_K - s, 0) * 100; }
+
+  var CHIPS = [[-20, "Falls 20%"], [0, "Flat"], [5, "Rises 5%"], [20, "Rises 20%"]];
+
+  function mkProtect(i){
+    var d = DIAL[i], kp = d[0], kc = d[1], cost = d[2], fn = collarFn(i);
+    var worst = (kp - P0 - cost) * 100, best = (kc - P0 - cost) * 100;
+    var pc1 = kp - cost - P0, pc2 = kc - cost - P0;       /* where the collar crosses plain ownership */
+    var capPct = Math.round(kc - P0);
+    return {
+      tab: "Risk Limiter", fn: fn, ownLabel: "Just own the shares", ownLegend: "Just own the shares", strLabel: "Risk Limiter", strLegend: "Shares + collar (Risk Limiter)",
+      what: "Risk Limiter: keep the shares, buy a $" + kp + " put (your floor) and sell a $" + kc + " call (your ceiling). Net cost is about " + plain(cost * 100) + " after trading costs.",
+      chips: CHIPS, start: -20,
+      aria: "Payoff chart. Owning 100 shares alone, you lose $3,000 if the stock falls 30% and gain $3,000 if it rises 30%. With this collar, your result stays between a loss of " + plain(worst) + " and a gain of " + plain(best) + ".",
+      washes: [
+        { p0: -30, p1: pc1, top: fn, bot: own, fill: "var(--series)", op: 0.14, lp: (pc1 + 30 >= 12 ? (-30 + pc1) / 2 : null), l1: "Loss", l2: "you avoid" },
+        { p0: pc2, p1: 30, top: own, bot: fn, fill: "var(--neutral)", op: 0.16, lp: (30 - pc2 >= 12 ? (pc2 + 30) / 2 : null), l1: "Upside", l2: "given up" }
+      ],
+      tiles: [
+        ["t1", "Protection", "Falls 20%? Lose " + plain(-fn(-20)) + ", not $2,000.", "Your worst case at expiry is set the day you open the trade: " + plain(worst) + ". That holds even if the stock falls much further."],
+        ["t2", "Upside you keep", "Rises " + capPct + "% or more? Make up to " + usd(best) + ".", "You keep gains up to the $" + kc + " ceiling, after the " + plain(cost * 100) + " cost of the contracts."],
+        ["t3", "The honest trade-off", "Flat stock: down " + plain(-fn(0)) + ". Big rally: gains stop at " + usd(best) + ".", "Protection is never free. A tighter floor means a much lower ceiling. Every idea we publish shows this cost."]
+      ],
+      note: "Ignores dividends, commissions and taxes. Buy a $" + kp + " put and sell a $" + kc + " call, net cost about " + plain(cost * 100) + " per 100 shares. Example model prices, not quotes.",
+      verdict: function(p){
+        var o = own(p), c = fn(p), dd = c - o;
+        if (dd > 0.5) return "The collar kept " + plain(dd) + " more in your pocket.";
+        if (p > pc2) return "You gave up " + plain(-dd) + " of gains: the " + plain(cost * 100) + " cost plus everything above the $" + kc + " ceiling.";
+        return "The collar cost you " + plain(-dd) + " here. That is the price of protection.";
+      }
+    };
+  }
+
+  var rentMax = (RENT_K - P0 + RENT_PREM) * 100, rentX = RENT_K - P0 + RENT_PREM;
+  var waitEff = WAIT_K - WAIT_PREM, waitDisc = (P0 - waitEff) / P0 * 100, waitX = WAIT_PREM;
+  var MODES = {
+    protect: mkProtect(di),
+    hold: {
+      tab: "Rent Check", fn: rent, ownLabel: "Just own the shares", ownLegend: "Just own the shares", strLabel: "Rent Check", strLegend: "Shares + covered call (Rent Check)",
+      what: "Rent Check: keep the shares and sell a $" + RENT_K + " call for $" + RENT_PREM.toFixed(2) + " a share. You collect " + plain(RENT_PREM * 100) + " up front. If the stock ends above $" + RENT_K + ", your shares are sold at $" + RENT_K + ".",
+      chips: CHIPS, start: -20,
+      aria: "Payoff chart. Owning 100 shares alone, you lose $3,000 if the stock falls 30%. With a covered call you collect " + plain(RENT_PREM * 100) + " of rent, so the loss is " + plain(-(rent(-30))) + ", which is still large. Gains stop at " + plain(rentMax) + " once the stock is above $" + RENT_K + ".",
+      washes: [
+        { p0: -30, p1: rentX, top: rent, bot: own, fill: "var(--series)", op: 0.18, lp: null },
+        { p0: rentX, p1: 30, top: own, bot: rent, fill: "var(--neutral)", op: 0.16, lp: (rentX + 30) / 2 + 1, l1: "Upside", l2: "given up" }
+      ],
+      tiles: [
+        ["t1", "What you collect", plain(RENT_PREM * 100) + " of rent, up front.", "You are paid to agree to sell at $" + RENT_K + ". It is yours to keep, even if the stock falls."],
+        ["t2", "Upside you keep", "Up to " + usd(rentMax) + " if the stock rises.", "You keep gains up to the $" + RENT_K + " ceiling, plus the " + plain(RENT_PREM * 100) + " rent."],
+        ["t3", "The honest trade-off", "Falls 20%? Still down " + plain(-rent(-20)) + ".", "The rent softens a small drop. It is not a floor. Above $" + RENT_K + " your gains stop."]
+      ],
+      note: "Ignores dividends, commissions and taxes. Own 100 shares and sell a $" + RENT_K + " call for $" + RENT_PREM.toFixed(2) + " a share. Example model prices, not quotes.",
+      verdict: function(p){
+        var o = own(p), r = rent(p), dd = r - o;
+        if (p < 0) return "The stock fell and the " + plain(RENT_PREM * 100) + " rent only softened it. You are still down " + plain(r) + ". Rent is not a floor.";
+        if (dd > 0.5) return "You are ahead of just owning by " + plain(dd) + ". That is your rent, minus any gains the ceiling cut off.";
+        return "Gains stop at " + plain(rentMax) + ". You gave up " + plain(-dd) + " compared with just owning the shares.";
+      }
+    },
+    enter: {
+      tab: "Entry Optimizer", fn: wait, ownLabel: "Buy the shares today", ownLegend: "Buy the shares today", strLabel: "Entry Optimizer", strLegend: "Sell a put (Entry Optimizer)",
+      what: "Entry Optimizer: instead of buying now, you are paid " + plain(WAIT_PREM * 100) + " to agree to buy 100 shares at $" + WAIT_K + ". You set aside $" + (WAIT_K * 100).toLocaleString("en-US") + " in cash. If the stock stays above $" + WAIT_K + ", you keep the " + plain(WAIT_PREM * 100) + " and buy nothing.",
+      chips: [[-20, "Falls 20%"], [-5, "Falls 5%"], [0, "Flat"], [20, "Rises 20%"]], start: -20,
+      aria: "Payoff chart comparing buying 100 shares today with selling a put at $" + WAIT_K + " for " + plain(WAIT_PREM * 100) + ". If the stock falls 20% you lose $2,000 buying today versus " + plain(-wait(-20)) + " with the put. If the stock is flat you make " + plain(WAIT_PREM * 100) + " with the put. Above that you earn only " + plain(WAIT_PREM * 100) + " while buying shares keeps climbing.",
+      washes: [
+        { p0: -30, p1: waitX, top: wait, bot: own, fill: "var(--series)", op: 0.14, lp: -12, l1: "Discount", l2: "you earn" },
+        { p0: waitX, p1: 30, top: own, bot: wait, fill: "var(--neutral)", op: 0.16, lp: 20, l1: "Upside", l2: "given up" }
+      ],
+      tiles: [
+        ["t1", "What you get paid", plain(WAIT_PREM * 100) + " now to agree to buy at $" + WAIT_K + ".", "You keep it even if you never buy. You set aside $" + (WAIT_K * 100).toLocaleString("en-US") + " in cash while you wait."],
+        ["t2", "A cheaper entry", "If you buy, your price is $" + waitEff.toFixed(2) + ".", "That is $" + WAIT_K + " minus the " + plain(WAIT_PREM * 100) + " you were paid, about " + r1(waitDisc) + "% under today's $100."],
+        ["t4", "If it falls below $" + WAIT_K, "You buy 100 shares at $" + WAIT_K + ".", "You keep the " + plain(WAIT_PREM * 100) + ", so your price is $" + waitEff.toFixed(2) + ". At $80 you are down " + plain(-wait(-20)) + ". At $60, down " + plain(-wait(-40)) + ". If it goes to zero, down " + plain(-wait(-100)) + ", the mathematical worst case. You then own the stock, and you can switch to Rent Check."],
+        ["t3", "The honest trade-off", "Rally? You earn only the " + plain(WAIT_PREM * 100) + ".", "If the stock drops hard, you still own it. This is stock risk with a cushion, not a floor."]
+      ],
+      note: "Ignores dividends, commissions and taxes. Sell a $" + WAIT_K + " put for $" + WAIT_PREM.toFixed(2) + " a share. Cash needed: $" + (WAIT_K * 100).toLocaleString("en-US") + ". Compared with buying 100 shares at $100 today. Example model prices, not quotes.",
+      verdict: function(p){
+        var o = own(p), w = wait(p), dd = w - o;
+        if (p < WAIT_K - P0) return "The stock fell below $" + WAIT_K + ", so you buy 100 shares at $" + WAIT_K + " (your price is $" + waitEff.toFixed(2) + "). You are down " + plain(w) + " on the position. Buying today would have been down " + plain(o) + ".";
+        if (dd > 0.5) return "The stock stayed above $" + WAIT_K + ", so you keep the " + plain(WAIT_PREM * 100) + " and buy nothing. That beat buying today by " + plain(dd) + ".";
+        return "You keep the " + plain(WAIT_PREM * 100) + ", but the stock rose. Buying today would have earned " + plain(-dd) + " more. Waiting has a cost.";
+      }
+    }
+  };
+
+  function buildChart(cfg){
+    var root = cfg.root, svg, tip, vline, dots = [], hit, curP = cfg.start, geom = {};
+    function render(){
+      root.innerHTML = "";
+      tip = document.createElement("div"); tip.className = "tip"; root.appendChild(tip);
+      var W = Math.max(root.clientWidth, 260), H = W < 480 ? 280 : 320;
+      var endLabels = W >= 560;
+      var m = { l: 48, r: endLabels ? 104 : 14, t: 10, b: 44 };
+      var iw = W - m.l - m.r, ih = H - m.t - m.b;
+      function X(p){ return m.l + (p + 30) / 60 * iw; }
+      function Y(v){ return m.t + (cfg.yMax - v) / (cfg.yMax - cfg.yMin) * ih; }
+      geom = { W: W, m: m, iw: iw, X: X, Y: Y };
+      svg = el("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": cfg.aria });
+
+      cfg.yTicks.forEach(function(v){
+        svg.appendChild(el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), "class": v === 0 ? "g-axis" : "g-grid" }));
+        svg.appendChild(el("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end", "class": "g-text" }, tick$(v)));
+      });
+      [-30, -20, -10, 0, 10, 20, 30].forEach(function(p){
+        svg.appendChild(el("text", { x: X(p), y: H - m.b + 18, "text-anchor": "middle", "class": "g-text" }, (p < 0 ? "-" : (p > 0 ? "+" : "")) + Math.abs(p) + "%"));
+      });
+      svg.appendChild(el("text", { x: m.l + iw / 2, y: H - 6, "text-anchor": "middle", "class": "g-text" }, "Stock price change over 90 days"));
+
+      function poly(p0, p1, top, bot, fill, op){
+        var pts = [], p;
+        for (p = p0; p <= p1 + 1e-9; p += 0.25) pts.push(X(p).toFixed(1) + "," + Y(top(p)).toFixed(1));
+        for (p = p1; p >= p0 - 1e-9; p -= 0.25) pts.push(X(p).toFixed(1) + "," + Y(bot(p)).toFixed(1));
+        svg.appendChild(el("polygon", { points: pts.join(" "), fill: fill, "fill-opacity": op }));
+      }
+      var narrow = iw < 340;
+      cfg.washes.forEach(function(w){
+        if (w.p1 <= w.p0) return;
+        poly(w.p0, w.p1, w.top, w.bot, w.fill, w.op);
+        if (w.lp == null) return;
+        var t = el("text", { "text-anchor": "middle", "class": "g-note" });
+        var y = Y((w.top(w.lp) + w.bot(w.lp)) / 2);
+        if (narrow){ t.appendChild(el("tspan", { x: X(w.lp), y: y - 2 }, w.l1)); t.appendChild(el("tspan", { x: X(w.lp), y: y + 13 }, w.l2)); }
+        else { t.appendChild(el("tspan", { x: X(w.lp), y: y + 4 }, w.l1 + " " + w.l2)); }
+        svg.appendChild(t);
+      });
+
+      cfg.series.forEach(function(s){
+        var d = "";
+        for (var p = -30; p <= 30; p += 1) d += (p === -30 ? "M" : "L") + X(p).toFixed(1) + "," + Y(s.fn(p)).toFixed(1);
+        svg.appendChild(el("path", { d: d, "class": "g-line", stroke: s.color }));
+        if (endLabels) svg.appendChild(el("text", { x: X(30) + 8, y: Y(s.fn(30)) + 4, "class": "g-label" }, s.short));
+      });
+
+      vline = el("line", { y1: m.t, y2: m.t + ih, "class": "g-cross" });
+      svg.appendChild(vline);
+      dots = cfg.series.map(function(s){
+        var c = el("circle", { r: 5, fill: s.color, stroke: "var(--card)", "stroke-width": 2 });
+        svg.appendChild(c); return c;
+      });
+
+      hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent", style: "cursor:ew-resize;touch-action:pan-y" });
+      svg.appendChild(hit);
+      function pickFrom(ev){
+        var r = svg.getBoundingClientRect();
+        var p = Math.round((ev.clientX - r.left - m.l) / iw * 60 - 30);
+        return Math.max(-30, Math.min(30, p));
+      }
+      hit.addEventListener("pointermove", function(ev){ var p = pickFrom(ev); cfg.onPick(p); showTip(p); });
+      hit.addEventListener("pointerdown", function(ev){ var p = pickFrom(ev); cfg.onPick(p); showTip(p); });
+      hit.addEventListener("pointerleave", hideTip);
+      hit.addEventListener("pointerup", function(ev){ if (ev.pointerType !== "mouse") hideTip(); });
+      hit.addEventListener("pointercancel", hideTip);
+
+      root.insertBefore(svg, tip);
+      place(curP);
+    }
+
+    function place(p){
+      curP = p;
+      if (!geom.X) return;
+      var x = geom.X(p);
+      vline.setAttribute("x1", x); vline.setAttribute("x2", x);
+      dots.forEach(function(c, i){ c.setAttribute("cx", x); c.setAttribute("cy", geom.Y(cfg.series[i].fn(p))); });
+    }
+    function showTip(p){
+      tip.innerHTML = "";
+      var h = document.createElement("div"); h.className = "th";
+      h.textContent = "Stock " + sgn(p) + " (to $" + price(p).toFixed(0) + ")"; tip.appendChild(h);
+      cfg.series.forEach(function(s){
+        var r = document.createElement("div"); r.className = "tr";
+        var k = document.createElement("span"); k.className = "tk";
+        var i = document.createElement("i"); i.style.background = s.color; k.appendChild(i);
+        k.appendChild(document.createTextNode(s.short));
+        var b = document.createElement("b"); b.textContent = usd(s.fn(p));
+        r.appendChild(k); r.appendChild(b); tip.appendChild(r);
+      });
+      tip.style.display = "block";
+      var x = geom.X(p), w = tip.offsetWidth;
+      var left = x + 14; if (left + w > geom.W - 4) left = x - 14 - w;
+      tip.style.left = Math.max(4, left) + "px"; tip.style.top = (geom.m.t + 6) + "px";
+    }
+    function hideTip(){ tip.style.display = "none"; }
+
+    render();
+    return { setP: place, rerender: render };
+  }
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* Reward/risk, mirroring the newsletter's Python (same formulas). Capital: $10,000 for owned shares
+     (covered call, collar, owning); $9,200 for the cash set aside on the put. T-bill target 4%/yr, 90 days. */
+  function pAt(price0){ return (price0 / P0 - 1) * 100; }
+  function span(fn){
+    var lo = 1e18, hi = -1e18, k, v;
+    for (k = -100; k <= 200; k += 0.5){ v = fn(k); if (v < lo) lo = v; if (v > hi) hi = v; }
+    return { loss: Math.max(-lo, 0), gain: hi };
+  }
+  function mult(x){ if (!isFinite(x)) return "n/a"; return (x >= 10 ? Math.round(x).toLocaleString("en-US") : (x >= 1 ? x.toFixed(1) : x.toFixed(2))) + "x"; }
+
+  var slider = $("sl"), slv = $("slv"), chipsBox = $("chips"), dial = $("dl");
+  var cur = "protect", chart = null;
+
+  function setRo(id, v){ var e = $(id); e.textContent = usd(v); e.className = cls(v); }
+
+  function set(p){
+    var M = MODES[cur];
+    slider.value = p; slv.textContent = sgn(p);
+    if (chart) chart.setP(p);
+    Array.prototype.forEach.call(chipsBox.children, function(c){ c.setAttribute("aria-pressed", String(parseInt(c.getAttribute("data-p"), 10) === p)); });
+    setRo("ro-own", own(p)); setRo("ro-str", M.fn(p));
+    $("vd").textContent = M.verdict(p);
+  }
+
+
+  function renderStats(M){
+    var sp = span(M.fn), box = $("stats"); box.innerHTML = "";
+    function add(label, val, sub, c){
+      var d = document.createElement("div"); d.className = "st";
+      var a = document.createElement("span"); a.textContent = label;
+      var b = document.createElement("b"); b.textContent = val; if (c) b.className = c;
+      d.appendChild(a); d.appendChild(b);
+      if (sub){ var m = document.createElement("small"); m.textContent = sub; d.appendChild(m); }
+      box.appendChild(d);
+    }
+    var l30 = Math.max(-M.fn(-30), 0), rr = sp.gain / sp.loss, rr30 = sp.gain / l30;
+    var stock0 = cur !== "protect";
+    add(stock0 ? "Worst case (stock goes to zero)" : "Worst case", "-" + plain(sp.loss), null, "neg");
+    if (stock0) add("Loss if stock falls 30%", "-" + plain(l30), null, "neg");
+    add("Best case", usd(sp.gain), null, "pos");
+    add("Reward/risk", mult(rr), stock0 ? mult(rr30) + " if it falls 30% instead" : "best case ÷ worst case", null);
+    $("stats-note").textContent = "Reward/risk is the best case divided by the worst case. Higher is better. 1.0x means you could make as much as you could lose. 0.10x means about 10 cents of best-case gain for every $1 you could lose." + (stock0 ? " The worst case is mathematical: it comes from the contracts, not a forecast. The 30% line shows a more usual bad outcome." : "");
+  }
+
+
+  function renderTable(M){
+    var t = $("tbl"); t.innerHTML = "";
+    var head = document.createElement("tr");
+    ["If the stock...", M.ownLabel, M.strLabel].forEach(function(h){ var th = document.createElement("th"); th.textContent = h; head.appendChild(th); });
+    t.appendChild(head);
+    [-30, -20, -10, 0, 5, 10, 20, 30].forEach(function(p){
+      var tr = document.createElement("tr");
+      var a = document.createElement("td"); a.textContent = p === 0 ? "stays flat" : (p < 0 ? "falls " : "rises ") + Math.abs(p) + "%"; tr.appendChild(a);
+      [own(p), M.fn(p)].forEach(function(v){
+        var td = document.createElement("td"); td.textContent = usd(v);
+        td.className = Math.round(v) < 0 ? "bad" : (Math.round(v) > 0 ? "good" : ""); tr.appendChild(td);
+      });
+      t.appendChild(tr);
+    });
+    $("tbl-note").textContent = M.note;
+  }
+
+  function renderTiles(M){
+    var box = $("tiles"); box.innerHTML = "";
+    M.tiles.forEach(function(x){
+      var d = document.createElement("div"); d.className = "tile " + x[0];
+      var k = document.createElement("div"); k.className = "k"; k.textContent = x[1];
+      var v = document.createElement("div"); v.className = "v"; v.textContent = x[2];
+      var p = document.createElement("p"); p.textContent = x[3];
+      d.appendChild(k); d.appendChild(v); d.appendChild(p); box.appendChild(d);
+    });
+  }
+
+  function dialText(i){
+    var d = DIAL[i], worst = (d[0] - P0 - d[2]) * 100, best = (d[1] - P0 - d[2]) * 100;
+    return "lose at most " + plain(worst) + ", gain at most " + plain(best) + " (reward/risk " + mult(-best / worst) + ")";
+  }
+
+  function renderMenu(){
+    var t = $("menu"); t.innerHTML = "";
+    var head = document.createElement("tr");
+    ["Floor / ceiling", "Worst case", "Best case", "Reward/risk", "Net cost"].forEach(function(h){ var th = document.createElement("th"); th.textContent = h; head.appendChild(th); });
+    t.appendChild(head);
+    DIAL.forEach(function(d, i){
+      var tr = document.createElement("tr");
+      var vals = ["$" + d[0] + " / $" + d[1], "-" + plain((d[0] - P0 - d[2]) * 100), usd((d[1] - P0 - d[2]) * 100), mult((d[1] - P0 - d[2]) / (P0 - d[0] + d[2])), plain(d[2] * 100)];
+      vals.forEach(function(v, j){ var td = document.createElement("td"); td.textContent = v; if (i === di && j === 0) td.style.fontWeight = "800"; tr.appendChild(td); });
+      t.appendChild(tr);
+    });
+  }
+
+  function choose(mode, keepP){
+    cur = mode;
+    var M = MODES[mode];
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(b){ b.setAttribute("aria-selected", String(b.getAttribute("data-m") === mode)); });
+    $("dialbox").hidden = mode !== "protect";
+    if (mode === "protect"){
+      $("dlv").textContent = dialText(di);
+      dial.setAttribute("aria-valuetext", "Floor $" + DIAL[di][0] + ", ceiling $" + DIAL[di][1] + ": " + dialText(di));
+      renderMenu();
+    }
+    $("what").textContent = M.what;
+    $("lg-own").textContent = M.ownLegend; $("lg-str").textContent = M.strLegend;
+    $("ro-own-l").textContent = M.ownLabel; $("ro-str-l").textContent = M.strLabel;
+    chipsBox.innerHTML = "";
+    M.chips.forEach(function(c){
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.setAttribute("data-p", c[0]); b.textContent = c[1];
+      b.addEventListener("click", function(){ set(c[0]); }); chipsBox.appendChild(b);
+    });
+    renderTable(M); renderTiles(M); renderStats(M);
+    var start = keepP == null ? M.start : keepP;
+    chart = buildChart({
+      root: $("ch"), start: start, onPick: set, yMin: -3000, yMax: 3000, yTicks: [-3000, -2000, -1000, 0, 1000, 2000, 3000],
+      aria: M.aria, washes: M.washes,
+      series: [
+        { short: M.ownLabel === "Buy the shares today" ? "Buy today" : "Just own", fn: own, color: "var(--neutral)" },
+        { short: M.strLabel, fn: M.fn, color: "var(--series)" }
+      ]
+    });
+    set(start);
+  }
+
+  var rz; window.addEventListener("resize", function(){ clearTimeout(rz); rz = setTimeout(function(){ if (chart) chart.rerender(); }, 120); });
+  slider.addEventListener("input", function(){ set(parseInt(slider.value, 10)); });
+  dial.addEventListener("input", function(){
+    di = parseInt(dial.value, 10);
+    MODES.protect = mkProtect(di);
+    choose("protect", parseInt(slider.value, 10));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(b){
+    b.addEventListener("click", function(){ choose(b.getAttribute("data-m")); });
+  });
+  choose("protect");
+})();
+</script>
+
+</body>
+</html>

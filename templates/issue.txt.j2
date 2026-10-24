@@ -1,0 +1,51 @@
+{% if synthetic %}*** SYNTHETIC TEST DATA - DO NOT PUBLISH ***
+{% endif %}{{ brand.name }} - {{ r.asof }}
+{{ brand.subtitle }}
+{{ brand.tagline }}
+How we do this: {{ brand.transparency_short }} {{ brand.transparency }}
+{{ r.n_candidates }} ideas passed the screen.
+
+{{ brand.repeat_short }} {{ brand.repeat }}
+
+== TODAY'S TWO FEATURED SETUPS ==
+{% for v in vignettes %}
+[{{ v.label }}]
+{% if v.pick %}{{ v.title }}, {{ v.pick.expiry }} ({{ v.pick.dte }} days)
+{{ v.headline }}
+Worst case {{ '' if v.is_collar else '(stock to zero) ' }}-{{ v.max_loss }} | Best case {{ v.max_gain }} | Reward/risk {{ v.reward_risk }} (higher is better; the worst case is math, not a forecast){{ '' if v.is_collar else ' [' ~ v.reward_risk_30 ~ ' if the stock falls 30% instead]' }} | Capital {{ v.capital }}
+{% for s in v.scenarios %}  {{ s.move }}: just own {{ s.own }} | {{ v.name }} {{ s.strategy }}
+{% endfor %}What you give up: {{ v.give_up }}{% if not v.is_collar %}
+Again and again: {{ brand.repeat_card }}{% endif %}
+{{ v.pick|legs }}
+{% else %}None cleared the screen today.
+{% endif %}
+{% endfor %}
+== {{ prongs.protect.name|upper }} (collars, worst case first) ==
+{% for p in r.collars %}
+{{ p.ticker }} {{ p.expiry }} ({{ p.dte }} days), stock {{ '%.2f'|format(p.spot) }} [{{ p.tier }}]
+  Floor {{ p.metrics.floor_return_pct }}% (dividend cut to zero: {{ p.metrics.floor_ex_div_return_pct }}%) | Cap +{{ p.metrics.cap_return_pct }}%
+  {{ p|legs }}
+{% else %}
+No collar cleared the screen today.
+{% endfor %}
+== {{ prongs.enter.name|upper }} (cash-secured puts) ==
+{% for p in r.puts %}
+{{ p.ticker }} {{ p.expiry }} ({{ p.dte }} days), stock {{ '%.2f'|format(p.spot) }}
+  Paid {{ p.metrics.premium }}/sh ({{ p.metrics.annualized_yield_pct }}% annualized) | Effective buy price {{ p.metrics.breakeven }} ({{ p.metrics.discount_to_spot_pct }}% below today) | NOT a floor
+  {{ p|legs }}
+{% else %}
+None cleared the screen today.
+{% endfor %}
+== {{ prongs.hold.name|upper }} (covered calls) ==
+{% for p in r.covered_calls %}
+{{ p.ticker }} {{ p.expiry }} ({{ p.dte }} days), stock {{ '%.2f'|format(p.spot) }}
+  Rent {{ p.metrics.premium }}/sh ({{ p.metrics.annualized_income_pct }}% annualized) | Gains stop at {{ p.metrics.strike }} | cushion only, NOT a floor
+  {{ p|legs }}
+{% else %}
+None cleared the screen today.
+{% endfor %}
+Data: {{ provider.name }}
+{{ brand.transparency_short }} Methodology and assumptions are in every issue.
+{{ brand.corrections }}
+{{ brand.disclose_positions }}
+{{ disclaimer }}

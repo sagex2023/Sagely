@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ brand.name }} - {{ r.asof }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1c2330;">
+<div style="max-width:680px;margin:0 auto;padding:24px 16px;">
+  {% if synthetic %}
+  <div style="background:#b42318;color:#fff;padding:10px 14px;border-radius:6px;font-weight:600;margin-bottom:16px;">
+    SYNTHETIC TEST DATA - DO NOT PUBLISH. Generated from a fixture, not real market prices.
+  </div>
+  {% endif %}
+  <h1 style="margin:0 0 4px;font-size:24px;">{{ brand.name }}</h1>
+  <div style="font-size:15px;font-weight:700;color:#1f4e8c;margin-bottom:4px;">{{ brand.subtitle }}</div>
+  <div style="color:#5b6577;margin-bottom:6px;">{{ brand.tagline }}</div>
+  <div style="color:#5b6577;margin-bottom:20px;font-size:14px;">{{ r.asof.strftime('%A, %B %d, %Y') }}</div>
+
+  <div style="background:#eef1f6;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:14px;line-height:1.5;"><b>{{ brand.transparency_short }}</b> {{ brand.transparency }}</div>
+
+  <p style="line-height:1.55;">Three ways to use options on stocks, in plain dollars on 100 shares, mathematical worst case first: <b>{{ prongs.enter.name }}</b> ({{ prongs.enter.promise|lower }}), <b>{{ prongs.hold.name }}</b> ({{ prongs.hold.promise|lower }}) and <b>{{ prongs.protect.name }}</b> ({{ prongs.protect.promise|lower }}). {{ r.n_candidates }} ideas passed the screen across {{ r.tickers|length }} tickers today.</p>
+
+  <p style="line-height:1.55;"><b>{{ brand.repeat_short }}</b> {{ brand.repeat }}</p>
+
+  <h2 style="font-size:20px;margin-top:28px;">Today's two featured setups</h2>
+  {% for v in vignettes %}
+  <div style="background:#fff;border:1px solid #e1e4ea;border-radius:8px;padding:16px;margin:14px 0;">
+    {% if not v.pick %}
+      <div style="font-size:12px;color:#5b6577;text-transform:uppercase;letter-spacing:.04em;">{{ v.label }}</div>
+      <p style="margin:6px 0 0;"><em>{% if v.slot == 'floor' %}No {{ prongs.protect.name }} collar cleared the screen today. Protection is rarely free, and we would rather show nothing than stretch.{% else %}No income setup cleared the screen today.{% endif %}</em></p>
+    {% else %}
+      <div style="font-size:12px;color:#5b6577;text-transform:uppercase;letter-spacing:.04em;">{{ v.label }} &middot; {{ v.name }}</div>
+      <div style="font-weight:700;font-size:18px;margin:4px 0;">{{ v.pick.ticker }} &middot; {{ v.pick.expiry.strftime('%b %d %Y') }} ({{ v.pick.dte }} days) &middot; stock at {{ '%.2f'|format(v.pick.spot) }}</div>
+      <div style="font-size:13px;color:#5b6577;margin-bottom:10px;">{{ v.pick.tier }}</div>
+      <p style="line-height:1.55;margin:0 0 12px;">{{ v.headline }}</p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+        <tr>
+          <td style="width:25%;padding:8px;background:#fbeceb;border-radius:6px;"><div style="font-size:12px;color:#5b6577;">{% if v.is_collar %}Worst case{% else %}Worst case (stock to zero){% endif %}</div><div style="font-size:17px;font-weight:700;">-{{ v.max_loss }}</div></td>
+          <td style="width:4px;"></td>
+          <td style="width:25%;padding:8px;background:#e8f4ea;border-radius:6px;"><div style="font-size:12px;color:#5b6577;">Best case</div><div style="font-size:17px;font-weight:700;">{{ v.max_gain }}</div></td>
+          <td style="width:4px;"></td>
+          <td style="width:25%;padding:8px;background:#f3eefb;border-radius:6px;"><div style="font-size:12px;color:#5b6577;">Reward/risk</div><div style="font-size:17px;font-weight:700;">{{ v.reward_risk }}</div></td>
+          <td style="width:4px;"></td>
+          <td style="width:25%;padding:8px;background:#eef1f6;border-radius:6px;"><div style="font-size:12px;color:#5b6577;">Capital involved</div><div style="font-size:17px;font-weight:700;">{{ v.capital }}</div></td>
+        </tr>
+      </table>
+      <p style="font-size:12px;color:#5b6577;margin:0 0 12px;">Reward/risk = most you could make ÷ most you could lose. Higher is better. 1.0x means equal. The worst case is mathematical: it comes from the contracts, not a forecast.{% if not v.is_collar %} If the stock falls 30% instead of going to zero: lose {{ v.loss_30 }}, reward/risk {{ v.reward_risk_30 }}.{% endif %}</p>
+      {% if v.img_url %}<img src="{{ v.img_url }}" alt="{{ v.alt }}" width="620" style="max-width:100%;height:auto;display:block;">{% else %}{{ v.svg }}{% endif %}
+      <div style="font-size:14px;line-height:1.6;margin-top:10px;">
+        <div style="font-size:12px;color:#5b6577;">If the stock ends... (just own 100 shares / {{ v.name }})</div>
+        {% for s in v.scenarios %}<div>{{ s.move }} (at {{ '%.2f'|format(s.price) }}): {{ s.own }} / <b>{{ s.strategy }}</b></div>
+        {% endfor %}
+      </div>
+      <p style="font-size:13px;line-height:1.5;margin:10px 0 4px;"><b>What you give up:</b> {{ v.give_up }}</p>
+      {% if not v.is_collar %}<p style="font-size:13px;line-height:1.5;margin:4px 0;color:#5b6577;"><b>Again and again:</b> {{ brand.repeat_card }}</p>{% endif %}
+      {% if v.forecast %}<p style="font-size:12px;color:#5b6577;margin:4px 0;">Why this stock today: {{ v.forecast.why }}.</p>{% endif %}
+      <p style="font-size:12px;color:#5b6577;line-height:1.4;margin:6px 0 0;">{{ v.pick|legs }}. Shown at expiry, per 100 shares. Dividends, commissions and taxes are left out. {{ v.approval }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <h2 style="font-size:18px;margin-top:28px;">Today's forecast by stock</h2>
+  <p style="color:#5b6577;font-size:14px;line-height:1.5;">A rules-based look at how each stock is behaving. It is not advice for any one person. Risk Limiter if a stock is jumpy or has run up. Entry Optimizer if it trades below its recent average. Rent Check if premiums look rich. Otherwise we sit out.</p>
+  <div style="font-size:13px;line-height:1.6;background:#fff;border:1px solid #e1e4ea;border-radius:8px;padding:10px 14px;">
+    {% for t, f in r.forecasts.items() %}<div><b>{{ t }}</b>: {% if f.mode == 'sit_out' %}Sit out{% else %}{{ prongs[f.mode].name }}{% endif %} <span style="color:#5b6577;">({{ f.why }})</span></div>
+    {% endfor %}
+  </div>
+
+  {% macro section(title, blurb, picks, empty) %}
+  <h2 style="font-size:18px;margin-top:28px;">{{ title }}</h2>
+  <p style="color:#5b6577;font-size:14px;line-height:1.5;">{{ blurb }}</p>
+  {% for p in picks %}
+  <div style="background:#fff;border:1px solid #e1e4ea;border-radius:8px;padding:12px 16px;margin:10px 0;font-size:14px;">
+    <div style="font-weight:700;">{{ p.ticker }} &middot; {{ p.expiry.strftime('%b %d %Y') }} ({{ p.dte }} days) &middot; stock {{ '%.2f'|format(p.spot) }}</div>
+    <div style="font-size:12px;color:#5b6577;margin:2px 0 6px;">{{ p.tier }}</div>
+    {{ caller(p) }}
+    <div style="font-size:12px;margin-top:6px;">{{ p|legs }}</div>
+  </div>
+  {% else %}
+  <p><em>{{ empty }}</em></p>
+  {% endfor %}
+  {% endmacro %}
+
+  {% call(p) section(prongs.protect.name ~ ': choose your risk', 'You own shares, buy a put and sell a call. The floor is the worst result at expiry after option costs and expected dividends. A floor at zero or better is rare. If none qualifies, we say so.', r.collars, 'No collar cleared the screen today.') %}
+    Floor {{ p.metrics.floor_return_pct }}% ({{ p.metrics.floor_ex_div_return_pct }}% if the dividend were cut to zero) &middot; Cap +{{ p.metrics.cap_return_pct }}% &middot; Net option cost {{ p.metrics.net_option_cost_pct }}% of the stock price
+  {% endcall %}
+
+  {% call(p) section(prongs.enter.name ~ ': get paid to wait', 'Sell a put on a stock you would be glad to own, backed by cash. Worst case: you own the shares at the breakeven price. That is stock risk with a cushion, not a floor.', r.puts, 'No Entry Optimizer setup cleared the screen today.') %}
+    Paid {{ p.metrics.premium }}/share ({{ p.metrics.yield_on_cash_pct }}% on the cash, {{ p.metrics.annualized_yield_pct }}% annualized) &middot; Buy at {{ p.metrics.breakeven }} effective, {{ p.metrics.discount_to_spot_pct }}% below today &middot; Chance of ending below the strike {{ p.metrics.assignment_prob_pct }}% (model estimate)
+  {% endcall %}
+
+  {% call(p) section(prongs.hold.name ~ ': get paid to hold', 'Sell a call on shares you own. The premium is rent. It is a small cushion, not a floor, and your gains stop at the strike.', r.covered_calls, 'No Rent Check setup cleared the screen today.') %}
+    Rent {{ p.metrics.premium }}/share ({{ p.metrics.income_pct }}%, {{ p.metrics.annualized_income_pct }}% annualized) &middot; Gains stop at {{ p.metrics.strike }} (+{{ p.metrics.called_away_return_pct }}% if called away) &middot; Chance of being called {{ p.metrics.called_prob_pct }}% (model estimate)
+  {% endcall %}
+
+  {% if r.call_spreads %}
+  <h2 style="font-size:18px;margin-top:28px;">Bonus: call debit spreads</h2>
+  {% for p in r.call_spreads %}
+  <div style="background:#fff;border:1px solid #e1e4ea;border-radius:8px;padding:12px 16px;margin:10px 0;font-size:14px;">
+    <b>{{ p.ticker }} &middot; {{ p.expiry.strftime('%b %d %Y') }}</b>: max loss -{{ p.metrics.max_loss }}/share, max gain +{{ p.metrics.max_gain }}/share ({{ p.metrics.reward_risk }}:1), breakeven {{ p.metrics.breakeven }}.
+    <div style="font-size:12px;margin-top:6px;">{{ p|legs }}</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <h2 style="font-size:18px;margin-top:28px;">Track record (every pick, logged)</h2>
+  {% if brand.track_record_url %}<p style="font-size:14px;"><a href="{{ brand.track_record_url }}">See the full public track record</a></p>{% endif %}
+  {% if scorecard and scorecard.n %}
+  <p style="font-size:14px;">{{ scorecard.n }} picks logged &middot; {{ scorecard.open|length }} open &middot; {{ scorecard.closed|length }} settled{% if scorecard.hit_rate is not none %} &middot; {{ scorecard.hit_rate }}% finished profitable{% endif %}. Marks use mid prices and ignore commissions.</p>
+  {% else %}
+  <p style="font-size:14px;">Tracking starts with the first published issue. Every pick is logged, winners and losers, and shown here.</p>
+  {% endif %}
+
+  <h2 style="font-size:18px;margin-top:28px;">Method</h2>
+  <p style="font-size:13px;color:#5b6577;line-height:1.5;">Universe: {{ r.tickers|join(', ') }}. Filters: open interest at least {{ cfg.min_open_interest }}, bid/ask spread at most {{ (cfg.max_spread_pct*100)|int }}% of mid, fills assumed {{ (cfg.fill_slippage*100)|int }}% of the way from mid to the adverse side. Data: {{ provider.name }}. Probabilities are risk-neutral Black-Scholes approximations, not forecasts. Dividends are estimated from yield times time and can be cut.{% if r.skipped %} Skipped today: {{ r.skipped|join(', ') }}.{% endif %}</p>
+
+  <hr style="border:none;border-top:1px solid #e1e4ea;margin:24px 0;">
+  <p style="font-size:12px;color:#5b6577;line-height:1.5;"><b>{{ brand.transparency_short }}</b> Methodology and assumptions are in every issue.</p>
+  <p style="font-size:12px;color:#5b6577;line-height:1.5;">{{ brand.corrections }}</p>
+  <p style="font-size:12px;color:#5b6577;line-height:1.5;">{{ brand.disclose_positions }}</p>
+  <p style="font-size:12px;color:#5b6577;line-height:1.5;">{{ disclaimer }}</p>
+</div>
+</body>
+</html>

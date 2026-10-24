@@ -1,0 +1,121 @@
+name: daily-brief
+
+# What this does, in order:
+#   1. Runs the tests, then screens options and builds the issue, charts and track-record page.
+#   2. Saves the pick log and chart images back to the repo, so history and old emails never break.
+#   3. Publishes the landing page, privacy/terms pages, charts and track-record page to GitHub Pages.
+#   4. Only AFTER the site is live, pushes the issue to Buttondown as a DRAFT. You review and press send.
+# Nothing is ever sent to subscribers automatically.
+
+on:
+  schedule:
+    - cron: "45 21 * * 1-5"   # 21:45 UTC weekdays = after the US close in both EDT and EST
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only screen and print counts (use this first to test your data connection)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-brief
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Tests must pass before anything is published
+        run: python -m pytest -q
+
+      - name: Dry run (counts only, nothing written or published)
+        if: ${{ inputs.dry_run }}
+        env:
+          TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python -m asym_brief.cli --provider "${{ vars.PROVIDER || 'tradier' }}" --dry-run
+
+      - name: Build the issue, charts and track-record page
+        if: ${{ !inputs.dry_run }}
+        env:
+          TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python -m asym_brief.cli --provider "${{ vars.PROVIDER || 'tradier' }}" --out out --log data/picks_log.csv
+
+      - name: Save the pick log and chart images to the repo
+        if: ${{ !inputs.dry_run }}
+        run: |
+          mkdir -p public/charts
+          cp -n out/charts/*.png public/charts/ 2>/dev/null || true
+          git config user.name "brief-bot"
+          git config user.email "brief-bot@users.noreply.github.com"
+          git add data/picks_log.csv public/charts || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Update pick log and charts"
+            git push
+          fi
+
+      - name: Assemble the public site
+        if: ${{ !inputs.dry_run }}
+        run: |
+          mkdir -p site/charts
+          cp launch/landing_page.html site/index.html
+          cp launch/privacy.html launch/terms.html site/
+          cp -r public/charts/. site/charts/ 2>/dev/null || true
+          cp out/track-record.html site/track-record.html
+      - uses: actions/configure-pages@v5
+        if: ${{ !inputs.dry_run }}
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ !inputs.dry_run }}
+        with:
+          path: site
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.dry_run }}
+        with:
+          name: issue-and-social
+          path: out/
+
+  deploy:
+    needs: build
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  draft:
+    needs: deploy
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: issue-and-social
+          path: out
+      - name: Push the issue to Buttondown as a DRAFT
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          if [ -z "$BUTTONDOWN_API_KEY" ]; then echo "No BUTTONDOWN_API_KEY set; skipping the draft."; exit 0; fi
+          python -m asym_brief.cli --push-only --out out

@@ -1,0 +1,131 @@
+{
+  "brand": {
+    "name": "The Sagely Report",
+    "short": "Sagely",
+    "tagline": "Let statistics be your guide. Get paid to wait, get paid to hold, choose your risk.",
+    "disclose_positions": "The author and related persons may hold positions in securities mentioned. Positions are not traded ahead of publication.",
+    "prongs": {
+      "enter": {
+        "name": "Entry Optimizer",
+        "promise": "Get paid to wait for your price",
+        "structure": "Cash-secured put"
+      },
+      "hold": {
+        "name": "Rent Check",
+        "promise": "Get paid while you own it",
+        "structure": "Covered call"
+      },
+      "protect": {
+        "name": "Risk Limiter",
+        "promise": "Choose your worst case",
+        "structure": "Collar"
+      }
+    },
+    "naming_note": "Working names. Sagely is close to the many existing 'Sage' names in finance, so a trademark attorney must clear it before launch, and domain availability is unchecked. 'Entry Optimizer' can read as promising the best entry; the copy therefore says plainly that you can still buy at the strike while the stock keeps falling.",
+    "subtitle": "Data Driven Investing",
+    "transparency_short": "Transparent, statistical, no hype.",
+    "transparency": "Every number comes from a statistical method and assumptions we publish. We show the mathematical worst case first, compare each idea with what a short-term Treasury bill would pay, log every pick, and make no predictions. Statistics describe odds, not results. That openness is rare in options writing.",
+    "repeat_short": "Collect the rent again and again.",
+    "repeat": "You can repeat Rent Check and Entry Optimizer every cycle. Keep the shares and collect rent again, or keep waiting and get paid again. It is a process, not a one-off trade. Amounts change, statistics describe odds and do not promise results, and a stock that keeps falling still costs you.",
+    "repeat_card": "You can do this again next cycle if you keep the shares (or keep waiting). Next cycle's amount may be higher or lower.",
+    "track_record_url": "https://sagex2023.github.io/Sagely/track-record.html",
+    "corrections": "Found a mistake? Reply and tell us. We fix errors in the next issue, say so at the top, and correct the track-record page. We do not quietly edit past results."
+  },
+  "universe": {
+    "tickers": [
+      "SPY",
+      "QQQ",
+      "SMH",
+      "XLE",
+      "XLV",
+      "XLF",
+      "XLU",
+      "XOM",
+      "CVX",
+      "JNJ",
+      "ABBV",
+      "KO",
+      "PEP",
+      "PG",
+      "VZ",
+      "JPM",
+      "AAPL",
+      "MSFT"
+    ],
+    "exclude": [],
+    "exclude_note": "Defense and aerospace names are left out by default to avoid any employer overlap. Add your employer, competitors, teaming partners and any name you have non-public information about to 'exclude', and pre-clear the final list with your employer's ethics/compliance office. Option liquidity for this universe has not been validated: run the screen and review what is skipped."
+  },
+  "risk_free_default": 0.04,
+  "fill_slippage": 0.5,
+  "min_open_interest": 100,
+  "max_spread_pct": 0.15,
+  "collar": {
+    "min_dte": 45,
+    "max_dte": 200,
+    "put_moneyness": [
+      0.9,
+      1.03
+    ],
+    "call_moneyness": [
+      1.03,
+      1.3
+    ],
+    "min_floor_return": -0.03
+  },
+  "call_spread": {
+    "min_dte": 30,
+    "max_dte": 200,
+    "long_moneyness": [
+      0.95,
+      1.08
+    ],
+    "short_moneyness": [
+      1.05,
+      1.3
+    ],
+    "min_reward_risk": 3.0,
+    "max_debit_pct": 0.04,
+    "max_breakeven_move": 0.08,
+    "enabled": false
+  },
+  "newsletter": {
+    "top_n_per_structure": 3,
+    "price_free": "$0",
+    "price_pro_monthly": "$12",
+    "price_pro_annual": "$120",
+    "price_note": "Starting prices to test; the market norm for paid newsletters is about $10/month or $100/year."
+  },
+  "publish": {
+    "buttondown_status": "draft"
+  },
+  "cash_secured_put": {
+    "min_dte": 21,
+    "max_dte": 75,
+    "moneyness": [
+      0.85,
+      0.99
+    ],
+    "min_discount_pct": 3.0,
+    "max_assignment_prob": 0.4
+  },
+  "covered_call": {
+    "min_dte": 21,
+    "max_dte": 75,
+    "moneyness": [
+      1.01,
+      1.1
+    ],
+    "min_called_away_return_pct": 1.0,
+    "max_called_prob": 0.45
+  },
+  "forecast": {
+    "risk_profile": "balanced",
+    "trend_window": 50,
+    "pullback": 0.03,
+    "run_up_3m": 0.15,
+    "high_vol": 0.35,
+    "min_iv_for_income": 0.18,
+    "min_vol_ratio": 0.95
+  },
+  "chart_base_url": "https://sagex2023.github.io/Sagely/charts"
+}

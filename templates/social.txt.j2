@@ -1,0 +1,19 @@
+{% if synthetic %}*** SYNTHETIC TEST DATA - DO NOT POST ***
+{% endif %}AUTO-GENERATED SOCIAL POSTS - {{ r.asof }}
+{{ brand.short }}: {{ brand.subtitle }}. {{ brand.transparency_short }}
+Review, then paste. Always keep the disclaimer line. Never post a pick that is not in the issue.
+
+--- POST 1 ({{ prongs.protect.name }}: lead with the worst case) ---
+{% set v = vignettes[0] %}{% if v.pick %}{{ v.pick.ticker }} {{ v.name }}: own 100 shares until {{ v.pick.expiry.strftime('%b %d') }}, mathematical worst case -{{ v.max_loss }}, best case {{ v.max_gain }}, reward/risk {{ v.reward_risk }}.
+The price of that protection: gains stop at the cap. Full payoff chart in today's issue.
+{% else %}No {{ prongs.protect.name }} setup cleared my screen today. Protection is rarely free.{% endif %}
+
+--- POST 2 ({{ prongs.enter.name }} / {{ prongs.hold.name }}: income, honestly) ---
+{% set w = vignettes[1] %}{% if w.pick %}{{ w.pick.ticker }} {{ w.name }}: {{ w.headline }}
+Mathematical worst case ({{ w.max_loss }}), reward/risk {{ w.reward_risk }} and what you give up are in the issue. Income is not a floor. Collect again each cycle you keep the shares or keep waiting; amounts vary and statistics are odds, not promises.
+{% else %}Premiums did not clear my screen today. Sitting out is a position.{% endif %}
+
+--- POST 3 (credibility, weekly) ---
+{% if scorecard and scorecard.n %}{{ scorecard.n }} pick{{ '' if scorecard.n == 1 else 's' }} logged, {{ scorecard.closed|length }} settled{% if scorecard.hit_rate is not none %}, {{ scorecard.hit_rate }}% finished profitable{% endif %}. Every pick is tracked, wins and losses.{% else %}Every pick I publish gets logged and scored, winners and losers. Tracking starts now.{% endif %}
+
+Footer: Educational only, not investment advice. Options involve risk.
