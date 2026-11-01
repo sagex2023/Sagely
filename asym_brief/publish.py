@@ -16,10 +16,13 @@ from pathlib import Path
 def push_draft(subject: str, html_path: Path, status: str = "draft") -> dict:
     key = os.environ["BUTTONDOWN_API_KEY"]
     body = html_path.read_text()
+    headers = {"Authorization": f"Token {key}", "Content-Type": "application/json"}
+    if status == "about_to_send":
+        headers["X-Buttondown-Live-Dangerously"] = "true"  # Buttondown requires this for live sends
     req = urllib.request.Request(
         "https://api.buttondown.com/v1/emails",
         data=json.dumps({"subject": subject, "body": body, "status": status}).encode(),
-        headers={"Authorization": f"Token {key}", "Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     try:
