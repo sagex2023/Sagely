@@ -129,6 +129,7 @@ jobs:
           SEND: ${{ (github.event_name == 'schedule' || inputs.send) && '--send' || '' }}
         run: |
           if [ -z "$BUTTONDOWN_API_KEY" ]; then echo "No BUTTONDOWN_API_KEY set; skipping."; exit 1; fi
+          set -o pipefail
           python -m asym_brief.cli --push-only --out out $SEND | tee push.log
       - name: Open a GitHub issue (GitHub emails you) if the issue was not sent
         if: ${{ failure() }}

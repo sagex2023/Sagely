@@ -46,7 +46,16 @@ def main(argv: list[str] | None = None) -> int:
 
             gate = read_report(Path(args.out))
             status = "about_to_send" if gate["ok"] else "draft"
-        resp = push_draft(f"{cfg['brand']['name']} - {stamp}", latest[-1], status)
+        subject = f"{cfg['brand']['name']} - {stamp}"
+        try:
+            resp = push_draft(subject, latest[-1], status)
+        except RuntimeError as exc:
+            print("ERROR:", exc)
+            if status == "draft":
+                return 1
+            resp = push_draft(subject, latest[-1], "draft")  # never lose the issue: keep it as a draft
+            print("Send failed; saved as a draft instead:", resp.get("id", resp))
+            return 2
         print(("sent:" if status == "about_to_send" else "draft saved:"), resp.get("id", resp))
         if gate is not None and not gate["ok"]:
             print("NOT SENT, needs your review. Failed gates:", "; ".join(gate["reasons"]))

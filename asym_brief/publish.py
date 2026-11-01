@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -21,5 +22,8 @@ def push_draft(subject: str, html_path: Path, status: str = "draft") -> dict:
         headers={"Authorization": f"Token {key}", "Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"Buttondown refused status={status!r}: HTTP {exc.code} {exc.read().decode(errors='replace')[:1000]}") from exc
