@@ -48,6 +48,7 @@ def run_screen(provider, cfg: dict, curve: BillCurve | None = None) -> dict:
     spreads: list[Pick] = []
     forecasts: dict[str, dict] = {}
     skipped: list[str] = []
+    n_expiries = 0
     dte_lo = min(cfg["collar"]["min_dte"], cfg["cash_secured_put"]["min_dte"], cfg["covered_call"]["min_dte"])
     dte_hi = max(cfg["collar"]["max_dte"], cfg["cash_secured_put"]["max_dte"], cfg["covered_call"]["max_dte"])
     for t in tickers:
@@ -59,6 +60,7 @@ def run_screen(provider, cfg: dict, curve: BillCurve | None = None) -> dict:
             chains = {e: provider.chain(t, e) for e in provider.expiries(t)
                       if dte_lo <= (e - provider.asof).days <= dte_hi}
             near = next(iter(sorted(chains.items(), key=lambda kv: abs((kv[0] - provider.asof).days - 45))), None)
+            n_expiries = max(n_expiries, len(chains))
             atm_iv = _atm_iv(near[1], spot) if near else float("nan")
             forecasts[t] = forecast(spot, closes, atm_iv, rv, risk_profile, cfg)
             new = (find_collars(t, spot, chains, provider.asof, curve, q, cfg),
@@ -88,5 +90,6 @@ def run_screen(provider, cfg: dict, curve: BillCurve | None = None) -> dict:
         "forecasts": forecasts,
         "n_candidates": len(collars) + len(puts) + len(calls) + len(spreads),
         "skipped": skipped,
+        "n_expiries": n_expiries,
         "tickers": tickers,
     }

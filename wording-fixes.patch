@@ -1,0 +1,25 @@
+diff --git a/launch/landing_page.html b/launch/landing_page.html
+index 2ad05fe..15eb05c 100644
+--- a/launch/landing_page.html
++++ b/launch/landing_page.html
+@@ -168,7 +168,7 @@
+     <ul>
+       <li><b>Mathematical worst case first.</b> Each idea starts with the most you could lose, worked out by math, in dollars, on 100 shares.</li>
+       <li><b>Assumptions shown.</b> We state the option prices and volatility we use, and we compare each idea with what a short-term Treasury bill would pay, so you can see what drives each result.</li>
+-      <li><b>Every pick logged.</b> We keep a public track record of what we feature, including the misses. It goes live with the first issue.</li>
++      <li><b>Every pick logged.</b> We keep a public track record of what we feature, including the misses. The page is updated with every issue.</li>
+       <li><b>No predictions.</b> Statistics describe odds. They do not promise results. Daily rules pick which job fits a stock, based on how it has behaved.</li>
+     </ul>
+   </section>
+@@ -410,9 +410,9 @@
+     <h2>Common questions</h2>
+     <details><summary>Is this investment advice?</summary><p class="muted">No. This is general education sent to every subscriber. It does not look at your goals, money or risk tolerance, and the author is not your financial advisor.</p></details>
+     <details><summary>Do I have to own the stock?</summary><p class="muted">For Rent Check and Risk Limiter, yes: you hold 100 shares per contract. For Entry Optimizer you hold cash instead, enough to buy 100 shares at the price you agreed to. Each idea says which one applies.</p></details>
+-    <details><summary>Can a collar still lose money?</summary><p class="muted">Yes. Most collars have a small known worst-case loss. Even a floor at zero is measured at expiry, only if you keep the shares until then, and before costs like commissions and taxes. You also give up gains above the ceiling,. If the stock ends above the ceiling, your shares can be sold at that price, which can trigger taxes. Early assignment can also change the result.</p></details>
++    <details><summary>Can a collar still lose money?</summary><p class="muted">Yes. Most collars have a small known worst-case loss. Even a floor at zero is measured at expiry, only if you keep the shares until then, and before costs like commissions and taxes. You also give up gains above the ceiling. If the stock ends above the ceiling, your shares can be sold at that price, which can trigger taxes. Early assignment can also change the result.</p></details>
+     <details><summary>What could go wrong with Entry Optimizer and Rent Check?</summary><p class="muted">Entry Optimizer: if the stock falls hard, you still end up owning it at the agreed price, so you can lose a lot, less the cash you were paid. Rent Check: the rent only cushions a small fall, and your gains stop at the agreed price. Neither sets a floor.</p></details>
+-    <details><summary>How will I see your track record?</summary><p class="muted">On a public page that we update with each issue. It lists every idea we publish, winners and losers, how many have settled, and the typical, best and worst results. The page goes live with the first issue. Until then there is no history to show, and we will not make any up.</p></details>
++    <details><summary>How will I see your track record?</summary><p class="muted">On a public page that we update with each issue. It lists every idea we publish, winners and losers, how many have settled, and the typical, best and worst results. The page is updated with every issue, and we never edit past results quietly.</p></details>
+     <details><summary>What if you get something wrong?</summary><p class="muted">We fix it and say so. If a number in an issue is wrong, the next issue opens with the correction and what changed, and the track-record page is corrected too. We do not quietly edit past results.</p></details>
+     <details><summary>Where do the prices come from?</summary><p class="muted">Delayed market data from a commercial provider, run through a fixed set of filters. Each email names its data source and filters.</p></details>
+     <details><summary>Do you trade these ideas?</summary><p class="muted">Each email has a position disclosure. Positions are never traded ahead of publication.</p></details>

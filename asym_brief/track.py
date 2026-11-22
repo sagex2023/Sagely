@@ -101,12 +101,50 @@ def summarize(scorecard: dict) -> dict:
     return out
 
 
+def _stats(items: list[dict]) -> dict:
+    import statistics
+
+    rets = [i["return_pct"] for i in items]
+    if not rets:
+        return {"n": 0, "settled": 0, "avg": None, "median": None, "worst": None, "positive_pct": None}
+    return {"n": len(rets), "settled": sum(1 for i in items if i.get("settled")),
+            "avg": round(statistics.mean(rets), 1), "median": round(statistics.median(rets), 1),
+            "worst": min(rets), "positive_pct": round(100 * sum(1 for r in rets if r > 0) / len(rets))}
+
+
+def period_returns(scorecard: dict, asof: date) -> dict:
+    """Group every logged idea by the date it was published: last 7 days, last 30 days, year to date,
+    plus one row per week (Monday start) and per month. Open ideas count at their current mid-price mark.
+    These are averages of per-idea results, not the return of a portfolio you could have held."""
+    from datetime import timedelta
+
+    items = ([dict(c, settled=True) for c in scorecard.get("closed", [])]
+             + [dict(o, settled=False) for o in scorecard.get("open", [])])
+    for i in items:
+        i["_d"] = date.fromisoformat(i["asof"])
+
+    def within(start):
+        return [i for i in items if start <= i["_d"] <= asof]
+
+    windows = {"Last 7 days": _stats(within(asof - timedelta(days=6))),
+               "Last 30 days": _stats(within(asof - timedelta(days=29))),
+               f"{asof.year} to date": _stats(within(date(asof.year, 1, 1)))}
+    weeks, months = {}, {}
+    for i in items:
+        weeks.setdefault(i["_d"] - timedelta(days=i["_d"].weekday()), []).append(i)
+        months.setdefault(i["_d"].replace(day=1), []).append(i)
+    return {"windows": windows,
+            "weeks": [(k, _stats(v)) for k, v in sorted(weeks.items(), reverse=True)],
+            "months": [(k, _stats(v)) for k, v in sorted(months.items(), reverse=True)]}
+
+
 def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> Path:
     """Write a public, self-contained track-record page from the marked pick log."""
     import html
 
     b = cfg["brand"]
     sm = summarize(scorecard)
+    pr = period_returns(scorecard, asof)
     e = html.escape
 
     def pct(x):
@@ -116,6 +154,28 @@ def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> P
         return "".join(
             f"<tr><td>{e(i['asof'])}</td><td>{e(i['ticker'])}</td><td>{e(i['structure'])}</td><td>{e(i['expiry'])}</td>"
             f"<td style='text-align:right'>{i['return_pct']:+.1f}%</td></tr>" for i in sorted(items, key=lambda x: x["asof"], reverse=True))
+
+    def period_table(label_head, rows_):
+        head = (f"<tr><td><b>{label_head}</b></td><td style='text-align:right'><b>Ideas</b></td>"
+                "<td style='text-align:right'><b>Average</b></td><td style='text-align:right'><b>Worst</b></td>"
+                "<td style='text-align:right'><b>Finished positive</b></td></tr>")
+        body_ = "".join(
+            f"<tr><td>{e(lbl)}</td><td style='text-align:right'>{s['n']} ({s['settled']} settled)</td>"
+            f"<td style='text-align:right'>{pct(s['avg'])}</td><td style='text-align:right'>{pct(s['worst'])}</td>"
+            f"<td style='text-align:right'>{'n/a' if s['positive_pct'] is None else str(s['positive_pct']) + '%'}</td></tr>"
+            for lbl, s in rows_ if s["n"])
+        return f"<table>{head}{body_}</table>"
+
+    returns_html = (
+        "<h2>Results by period</h2>"
+        "<p class='fine'>Each row averages the results of the ideas we published in that period, so the first row is the ideas "
+        "from the last 7 days. This is not the return of a portfolio you could have held: ideas overlap, sizes differ, and open ideas "
+        "are counted at today's mid-price mark and can still change.</p>"
+        + period_table("Period", list(pr["windows"].items()))
+        + "<h3>By week published</h3>"
+        + period_table("Week of", [(f"{k:%b %d, %Y}", s) for k, s in pr["weeks"]])
+        + "<h3>By month published</h3>"
+        + period_table("Month", [(f"{k:%B %Y}", s) for k, s in pr["months"]]))
 
     if sm["n"] == 0:
         body = "<p>No ideas have been published yet, so there is no history to show. This page fills in automatically with the first issue.</p>"
@@ -128,6 +188,7 @@ def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> P
               "in the few cases that go wrong, so the worst result matters as much as the share that finished positive. "
               "Results are the return on the most you could lose. Marks use mid prices and ignore dividends, commissions and taxes. "
               "Small numbers prove very little: statistics describe odds, not results.</p>"
+            + returns_html
             + f"<h2>Settled</h2><table>{rows(scorecard.get('closed', [])) or '<tr><td>None yet</td></tr>'}</table>"
             + f"<h2>Open</h2><table>{rows(scorecard.get('open', [])) or '<tr><td>None</td></tr>'}</table>")
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

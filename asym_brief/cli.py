@@ -69,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"{result['asof']}: {result['n_candidates']} candidates, "
           f"{len(result['collars'])} Risk Limiter, {len(result['puts'])} Entry Optimizer, {len(result['covered_calls'])} Rent Check, "
-          f"{len(result['skipped'])} skipped")
+          f"{len(result['skipped'])} skipped, up to {result['n_expiries']} expiries in range")
     if args.dry_run:
         return 0
 

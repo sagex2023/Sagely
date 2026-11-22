@@ -302,3 +302,15 @@ def test_auto_send_gates():
     reasons = " | ".join(check_issue(bad, CFG, "flat default", "this is Risk-Free", today))
     for expected in ("Entry Optimizer", "Treasury", "skipped", "days old", "risk-free"):
         assert expected in reasons
+
+
+def test_period_returns_windows():
+    from asym_brief.track import period_returns
+
+    sc = {"closed": [{"asof": "2026-11-17", "return_pct": 10.0}, {"asof": "2026-02-02", "return_pct": -20.0}],
+          "open": [{"asof": "2026-11-20", "return_pct": 2.0}]}
+    pr = period_returns(sc, date(2026, 11, 22))
+    assert pr["windows"]["Last 7 days"]["n"] == 2 and pr["windows"]["Last 7 days"]["avg"] == 6.0
+    assert pr["windows"]["Last 30 days"]["n"] == 2
+    assert pr["windows"]["2026 to date"]["n"] == 3 and pr["windows"]["2026 to date"]["worst"] == -20.0
+    assert [k.isoformat() for k, _ in pr["weeks"]][0] == "2026-11-16"
