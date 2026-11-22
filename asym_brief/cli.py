@@ -24,6 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--push-only", action="store_true", help="push the newest rendered issue in --out to Buttondown, skip screening")
     ap.add_argument("--send", action="store_true",
                     help="with --push-only: send to subscribers if every safety gate passed, else save a draft and exit 2")
+    ap.add_argument("--log-sent", action="store_true",
+                    help="append the picks of the issue in --out to the public log (run only after a real send)")
     ap.add_argument("--tickers", help="comma-separated override of the configured universe")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -31,6 +33,15 @@ def main(argv: list[str] | None = None) -> int:
     cfg = json.loads(Path(args.config).read_text())
     if args.tickers:
         cfg["universe"]["tickers"] = [t.strip().upper() for t in args.tickers.split(",")]
+    if args.log_sent:
+        from .track import append_rows
+
+        f = Path(args.out) / "picks-to-log.json"
+        if not f.exists():
+            print("no picks-to-log.json in", args.out)
+            return 1
+        print(f"logged {append_rows(Path(args.log), json.loads(f.read_text()))} sent picks to {args.log}")
+        return 0
     if args.push_only:
         from .publish import push_draft
 
@@ -81,8 +92,12 @@ def main(argv: list[str] | None = None) -> int:
     if provider.synthetic:
         print("Synthetic data: pick log NOT updated, publish disabled.")
         return 0
-    n = log_picks(log_path, result["collars"] + result["puts"] + result["covered_calls"] + result["call_spreads"], result["asof"])
-    print(f"logged {n} new picks to {log_path}")
+    from .track import pick_rows
+
+    # picks are logged only after the issue is really sent (see --log-sent), never at build time
+    rows = pick_rows(result["collars"] + result["puts"] + result["covered_calls"] + result["call_spreads"], result["asof"])
+    (Path(args.out) / "picks-to-log.json").write_text(json.dumps(rows))
+    print(f"{len(rows)} picks queued; they are logged only if the issue is sent")
     from .track import render_track_record
 
     print("wrote", render_track_record(mark_log(log_path, provider), cfg, result["asof"], Path(args.out) / "track-record.html"))

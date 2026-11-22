@@ -341,3 +341,15 @@ def test_expired_pick_settles_on_expiry_close_and_unpriceable_picks_are_counted(
                legs=[Leg("call", -1, 99999.0, 1.0)], metrics={})
     log_picks(log, [bad], date(2026, 10, 1))
     assert mark_log(log, p)["unmarked"] == ["x2"]
+
+
+def test_picks_are_logged_only_when_append_rows_is_called(tmp_path):
+    from asym_brief.structures import Leg, Pick
+    from asym_brief.track import append_rows, pick_rows
+
+    pk = Pick(id="z1", ticker="SPY", structure="Collar", expiry=date(2026, 12, 18), dte=40, spot=100.0,
+              legs=[Leg("stock", 1, None, 100.0)], metrics={})
+    log = tmp_path / "l.csv"
+    rows = pick_rows([pk], date(2026, 11, 3))
+    assert not log.exists()                       # building rows writes nothing
+    assert append_rows(log, rows) == 1 and append_rows(log, rows) == 0

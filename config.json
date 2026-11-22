@@ -29,6 +29,7 @@
     "repeat_short": "Collect the rent again and again.",
     "repeat": "You can repeat Rent Check and Entry Optimizer every cycle. Keep the shares and collect rent again, or keep waiting and get paid again. It is a process, not a one-off trade. Amounts change, statistics describe odds and do not promise results, and a stock that keeps falling still costs you.",
     "repeat_card": "You can do this again next cycle if you keep the shares (or keep waiting). Next cycle's amount may be higher or lower.",
+    "track_record_note": "Entries dated 2026-10-24, 2026-10-27 and 2026-11-22 come from test or failed builds and were not emailed to subscribers. They are kept here so nothing is quietly removed. From 2026-11-23 on, an idea is logged only after its issue is sent.",
     "track_record_url": "https://sagex2023.github.io/Sagely/track-record.html",
     "corrections": "Found a mistake? Reply and tell us. We fix errors in the next issue, say so at the top, and correct the track-record page. We do not quietly edit past results."
   },

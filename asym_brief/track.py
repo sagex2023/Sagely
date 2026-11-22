@@ -18,23 +18,31 @@ from .structures import Pick
 FIELDS = ["id", "asof", "ticker", "structure", "expiry", "spot", "legs", "metrics"]
 
 
-def log_picks(path: Path, picks: list[Pick], asof: date) -> int:
+def pick_rows(picks: list[Pick], asof: date) -> list[dict]:
+    return [{"id": p.id, "asof": asof.isoformat(), "ticker": p.ticker, "structure": p.structure,
+             "expiry": p.expiry.isoformat(), "spot": p.spot,
+             "legs": json.dumps([asdict(l) for l in p.legs]), "metrics": json.dumps(p.metrics)} for p in picks]
+
+
+def append_rows(path: Path, rows: list[dict]) -> int:
+    """Append rows whose id is not already logged. Called only after an issue was actually sent."""
     path.parent.mkdir(parents=True, exist_ok=True)
     existing = set()
     if path.exists():
         with path.open() as f:
             existing = {r["id"] for r in csv.DictReader(f)}
-    new = [p for p in picks if p.id not in existing]
+    new = [r for r in rows if r["id"] not in existing]
     write_header = not path.exists()
     with path.open("a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         if write_header:
             w.writeheader()
-        for p in new:
-            w.writerow({"id": p.id, "asof": asof.isoformat(), "ticker": p.ticker, "structure": p.structure,
-                        "expiry": p.expiry.isoformat(), "spot": p.spot,
-                        "legs": json.dumps([asdict(l) for l in p.legs]), "metrics": json.dumps(p.metrics)})
+        w.writerows(new)
     return len(new)
+
+
+def log_picks(path: Path, picks: list[Pick], asof: date) -> int:
+    return append_rows(path, pick_rows(picks, asof))
 
 
 def _leg_value(leg: dict, provider, ticker: str, expiry: date, spot_now: float, chain):
@@ -177,6 +185,8 @@ def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> P
             for lbl, s in rows_ if s["n"])
         return f"<table>{head}{body_}</table>"
 
+    note = b.get("track_record_note", "")
+    note_html = f"<p class='fine'><b>Note on earlier entries.</b> {e(note)}</p>" if note else ""
     returns_html = (
         "<h2>Results by period</h2>"
         "<p class='fine'>Each row averages the results of the ideas we published in that period, so the first row is the ideas "
@@ -201,6 +211,7 @@ def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> P
               "in the few cases that go wrong, so the worst result matters as much as the share that finished positive. "
               "Results are the return on the most you could lose. Marks use mid prices and ignore dividends, commissions and taxes. "
               "Small numbers prove very little: statistics describe odds, not results.</p>"
+            + note_html
             + returns_html
             + f"<h2>Settled</h2><table>{rows(scorecard.get('closed', [])) or '<tr><td>None yet</td></tr>'}</table>"
             + f"<h2>Open</h2><table>{rows(scorecard.get('open', [])) or '<tr><td>None</td></tr>'}</table>")

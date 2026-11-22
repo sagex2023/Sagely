@@ -8,7 +8,7 @@ Read first: README.md, PLAN.md, LAUNCH_CHECKLIST.md.
 - Code and 26 tests are done. Run `python -m pytest -q`.
 - `.github/workflows/daily.yml` runs live: Tuesday cron builds, deploys Pages, and SENDS via Buttondown only if every gate in `asym_brief/gates.py` passes (else draft + GitHub issue alert). Manual runs make drafts unless `send` is ticked. Real sends worked on Nov 1, 3, 10, 17 2026 (Buttondown needs the live-send header; already in publish.py).
 - Secrets set: TRADIER_TOKEN, FINNHUB_API_KEY, BUTTONDOWN_API_KEY (Andrew types values; never ask him to paste keys in chat). Gmail app passwords are unavailable (Advanced Protection), so alerts are GitHub issues.
-- Known open issues: picks are logged at build time, so runs that were never sent (drafts, the failed Oct 27 send) are in data/picks_log.csv and on the public track record; the newsletter promises only published ideas. Decide how to correct that publicly (see wording rules: no quiet edits).
+- Picks are logged to data/picks_log.csv only AFTER a real send (`--log-sent`, in the draft job); builds only queue them in out/picks-to-log.json. Entries dated 2026-10-24, 10-27 and 11-22 predate this and were not emailed; the track-record page carries a note (config brand.track_record_note). Never remove them quietly.
 - Skipped by Andrew's decision: trademark/domain clearance and employer/attorney/data-provider sign-offs. Revisit before charging for Pro.
 
 ## Wording rules (a test enforces the banned words)
