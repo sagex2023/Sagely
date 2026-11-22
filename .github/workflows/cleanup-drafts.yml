@@ -1,0 +1,24 @@
+name: cleanup-drafts
+
+# One-off: deletes the listed Buttondown emails, but only if Buttondown reports each one as a draft.
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          for id in em_7g0qvptxmg8v8vw6b7vqagvvby em_3qvfefs2e18dms3d09agfw1s3t em_77093zghtg8hnr0730ttk3sz6q \
+                    em_2w2wk9awrd81sa3cj232dk8jxx em_7bznra2e6b9g49t2v3fx2gh2t1 em_23qhh7xdx484qakjp16wggx52w \
+                    em_0jbd5kzea889bv64hn275nm2v6; do
+            status=$(curl -s -H "Authorization: Token $BUTTONDOWN_API_KEY" "https://api.buttondown.com/v1/emails/$id" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','?'))")
+            if [ "$status" = "draft" ]; then
+              code=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: Token $BUTTONDOWN_API_KEY" "https://api.buttondown.com/v1/emails/$id")
+              echo "$id draft -> DELETE $code"
+            else
+              echo "$id status=$status -> left alone"
+            fi
+          done
