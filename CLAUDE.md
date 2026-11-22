@@ -5,9 +5,10 @@ Sagely (newsletter "The Sagely Sniper Trading Report", "Data Driven Investing") 
 Read first: README.md, PLAN.md, LAUNCH_CHECKLIST.md.
 
 ## Current state
-- Code and 23 tests are done. Run `python -m pytest -q`.
-- The workflow `.github/workflows/daily.yml` (build, deploy to Pages, draft to Buttondown) has NEVER run on real data.
-- Next job: push the repo, set secrets TRADIER_TOKEN, FINNHUB_API_KEY, BUTTONDOWN_API_KEY with `gh secret set` (Andrew types the values; never ask him to paste keys in chat), enable Pages with source "GitHub Actions", run `daily-brief` with dry_run, read the log with `gh run view --log`, fix failures (likely Tradier field names, Treasury CSV fetch, thin-liquidity filters), then run without dry_run (creates a Buttondown DRAFT only).
+- Code and 26 tests are done. Run `python -m pytest -q`.
+- `.github/workflows/daily.yml` runs live: Tuesday cron builds, deploys Pages, and SENDS via Buttondown only if every gate in `asym_brief/gates.py` passes (else draft + GitHub issue alert). Manual runs make drafts unless `send` is ticked. Real sends worked on Nov 1, 3, 10, 17 2026 (Buttondown needs the live-send header; already in publish.py).
+- Secrets set: TRADIER_TOKEN, FINNHUB_API_KEY, BUTTONDOWN_API_KEY (Andrew types values; never ask him to paste keys in chat). Gmail app passwords are unavailable (Advanced Protection), so alerts are GitHub issues.
+- Known open issues: picks are logged at build time, so runs that were never sent (drafts, the failed Oct 27 send) are in data/picks_log.csv and on the public track record; the newsletter promises only published ideas. Decide how to correct that publicly (see wording rules: no quiet edits).
 - Skipped by Andrew's decision: trademark/domain clearance and employer/attorney/data-provider sign-offs. Revisit before charging for Pro.
 
 ## Wording rules (a test enforces the banned words)

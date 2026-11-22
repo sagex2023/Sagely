@@ -314,3 +314,30 @@ def test_period_returns_windows():
     assert pr["windows"]["Last 30 days"]["n"] == 2
     assert pr["windows"]["2026 to date"]["n"] == 3 and pr["windows"]["2026 to date"]["worst"] == -20.0
     assert [k.isoformat() for k, _ in pr["weeks"]][0] == "2026-11-16"
+
+
+def test_expired_pick_settles_on_expiry_close_and_unpriceable_picks_are_counted(tmp_path):
+    from asym_brief.structures import Leg, Pick
+
+    class P(FixtureProvider):
+        pass
+
+    p = P(asof=date(2026, 10, 30))
+    hist = p.history("SPY", 252)
+    expiry = date(2026, 10, 23)
+    close_on_expiry = float(hist[hist.index <= pd.Timestamp(expiry)].iloc[-1])
+    assert close_on_expiry != p.spot("SPY")  # settling on today's price would give a different answer
+    log = tmp_path / "log.csv"
+    legs = [Leg("stock", 1, None, 100.0), Leg("call", -1, 100.0, 1.0)]
+    pick = Pick(id="x1", ticker="SPY", structure="Covered call", expiry=expiry, dte=22, spot=100.0, legs=legs,
+                metrics={"max_loss": 100.0})
+    log_picks(log, [pick], date(2026, 10, 1))
+    sc = mark_log(log, p)
+    c = sc["closed"][0]
+    expected = (close_on_expiry - 100.0) - (max(close_on_expiry - 100.0, 0.0) - 1.0)
+    assert c["pnl_per_share"] == pytest.approx(expected, abs=1e-3)
+    # an open idea whose contract is no longer quoted is counted, not dropped
+    bad = Pick(id="x2", ticker="SPY", structure="Covered call", expiry=date(2026, 12, 18), dte=49, spot=100.0,
+               legs=[Leg("call", -1, 99999.0, 1.0)], metrics={})
+    log_picks(log, [bad], date(2026, 10, 1))
+    assert mark_log(log, p)["unmarked"] == ["x2"]

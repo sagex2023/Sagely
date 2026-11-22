@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import json
+import pandas as pd
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
@@ -52,17 +53,25 @@ def _leg_value(leg: dict, provider, ticker: str, expiry: date, spot_now: float, 
 def mark_log(path: Path, provider) -> dict:
     """Return a summary of open and closed picks with per-pick return on capital at risk."""
     if not path.exists():
-        return {"n": 0, "open": [], "closed": [], "hit_rate": None}
+        return {"n": 0, "open": [], "closed": [], "unmarked": [], "hit_rate": None}
     with path.open() as f:
         rows = list(csv.DictReader(f))
-    open_, closed = [], []
+    open_, closed, unmarked = [], [], []
     for r in rows:
         legs = json.loads(r["legs"])
         expiry = date.fromisoformat(r["expiry"])
         try:
-            spot_now = provider.spot(r["ticker"])
-            chain = None if provider.asof >= expiry else provider.chain(r["ticker"], expiry)
+            if provider.asof >= expiry:
+                # settle on the close of expiry day, not on today's price
+                hist = provider.history(r["ticker"], 252)
+                hist = hist[hist.index <= pd.Timestamp(expiry)]
+                if hist.empty:
+                    raise ValueError("no close on or before expiry")
+                spot_now, chain = float(hist.iloc[-1]), None
+            else:
+                spot_now, chain = provider.spot(r["ticker"]), provider.chain(r["ticker"], expiry)
         except Exception:
+            unmarked.append(r["id"])
             continue
         pnl, ok = 0.0, True
         for leg in legs:
@@ -72,6 +81,7 @@ def mark_log(path: Path, provider) -> dict:
                 break
             pnl += leg["side"] * (v - leg["px"])
         if not ok:
+            unmarked.append(r["id"])  # never drop an idea silently: the page says how many could not be marked
             continue
         m = json.loads(r["metrics"])
         risk = m.get("max_loss") or float(r["spot"])  # spreads: debit; collars: capital in the stock
@@ -79,7 +89,7 @@ def mark_log(path: Path, provider) -> dict:
                 "expiry": r["expiry"], "pnl_per_share": round(pnl, 3), "return_pct": round(100 * pnl / risk, 1)}
         (closed if provider.asof >= expiry else open_).append(item)
     wins = [c for c in closed if c["pnl_per_share"] > 0]
-    return {"n": len(rows), "open": open_, "closed": closed,
+    return {"n": len(rows), "open": open_, "closed": closed, "unmarked": unmarked,
             "hit_rate": round(100 * len(wins) / len(closed), 1) if closed else None}
 
 
@@ -97,6 +107,7 @@ def summarize(scorecard: dict) -> dict:
     by = {}
     for c in closed + scorecard.get("open", []):
         by[c["structure"]] = by.get(c["structure"], 0) + 1
+    out["unmarked"] = len(scorecard.get("unmarked", []))
     out["by_structure"] = by
     return out
 
@@ -182,6 +193,8 @@ def render_track_record(scorecard: dict, cfg: dict, asof: date, path: Path) -> P
     else:
         body = (
             f"<p>{sm['n']} ideas logged, {sm['settled']} settled and {sm['open']} still open.</p>"
+            + (f"<p class='fine'>{sm['unmarked']} logged idea(s) could not be priced today (no usable quote) and are not in the results below. "
+               "We count them here instead of leaving them out silently.</p>" if sm["unmarked"] else "")
             + (f"<p>Among the settled ideas: typical result {pct(sm['median'])}, best {pct(sm['best'])}, worst {pct(sm['worst'])}. "
                f"{sm['positive_pct']}% finished positive.</p>" if sm["settled"] else "<p>Nothing has settled yet.</p>")
             + "<p><b>How to read this.</b> Income ideas (Rent Check, Entry Optimizer) can finish positive most of the time and still lose a lot "
